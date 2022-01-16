@@ -1,0 +1,36 @@
+<!--<!DOCTYPE html>-->
+<!--<html lang="en" xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>Login Progress</title>-->
+<!--</head>-->
+<!--<body>-->
+<!--    <h1>Login Progress</h1>-->
+<!--    <a th:if="!${userName}" href="/oauth2/authorization/google">구글 로그인</a>-->
+<!--    <p th:if="${userName}">-->
+<!--        Logged in as:-->
+<!--        <span th:text="${userName}"></span>-->
+<!--    </p>-->
+<!--</body>-->
+<!--</html>-->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
+<h1>Login</h1>
+<div th:if="${param.error}">
+    Invalid username or password.
+</div>
+<a href="/oauth2/authorization/google">구글 로그인</a>
+<a href="/oauth2/authorization/naver">네이버 로그인</a>
+<!--<form action="/login" method="post" th:action="@{/login}">-->
+<!--    <p>Username: <input type="text" name="username" /></p>-->
+<!--    <p>Password: <input type="password" name="password" /></p>-->
+<!--    <p><input type="submit" value="Login" /></p>-->
+<!--</form>-->
+</body>
+</html>

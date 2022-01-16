@@ -1,0 +1,19 @@
+package composite
+
+import "testing"
+
+func TestAfter(t *testing.T) {
+	file1 := &file{"file1"}
+	file2 := &file{"file2"}
+	file3 := &file{"file3"}
+
+	folder1 := &folder{name: "folder1"}
+	folder1.add(file1)
+
+	folder2 := &folder{name: "folder2"}
+	folder2.add(file2)
+	folder2.add(file3)
+	folder2.add(folder1)
+
+	folder2.search("rose")
+}
