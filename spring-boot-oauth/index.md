@@ -1,13 +1,11 @@
 ---
-
-title: 스프링 시큐리티 와 OAuth2 와 JWT 의 콜라보
-description: Spring Boot, Spring Security, OAuth 2.0, JWT 와의 치열한 싸움 기록
+title: "스프링 시큐리티 와 OAuth2 와 JWT 의 콜라보"
+summary: Spring Boot, Spring Security, OAuth 2.0, JWT 와의 치열한 싸움 기록
 date: 2021-04-27
-image: spring-security.png
-categories:
-- Spring
+pin: false
+image: images/spring-security.png
 tags:
-- Spring Security
+- Spring
 - OAuth 2.0
 - JWT
 ---
@@ -24,7 +22,7 @@ tags:
 
 스프링 시큐리티는 주로 서블릿 필터와 이들로 구성된 필터 체인을 사용한다. 우선은 소셜 로그인이 아닌 기본적인 폼 로그인을 할 경우의 구조를 살펴보자.
 
-![](security-aritchtecture.png)
+![](images/security-aritchtecture.png)
 
 1. 사용자가 로그인 정보와 함께 인증 요청 (`HttpRequest`)
 2. `AuthenticationFilter`가 요청을 가로챔. 이때 가로챈 정보를 통해 `UsernamePasswordAuthenticationToken` 객체 (사용자가 입력한 데이터를 기반으로 생성, 즉 현 상태는 미검증 Authentication) 생성
@@ -41,11 +39,11 @@ tags:
 
 아래는 스프링 시큐리티에서 동작하는 기본 필터들의 목록 및 순서다. 만약 OAuth 2.0 로그인을 사용한다면, `UsernamePasswordAuthenticationFilter` 대신 `OAuth2LoginAuthenticationFilter` 가 호출된다. 두 필터의 상위 클래스는 `AbstractAuthenticationProcessingFilter`이다. 사실 스프링 시큐리티는 `AbstractAuthenticationProcessingFilter`를 호출하고, 로그인 방식에 따라 구현체인 `UsernamePasswordAuthenticationFilter` 와 `OAuth2LoginAuthenticationFilter` 가 동작하는 방식이다.
 
-![](security-filters.png)
+![](iamges/security-filters.png)
 
 조금 더 상세히 메서드 및 부가적인 과정을 표현한 그림은 아래와 같다. 이 포스팅에서는 `AuthenticationSuccessHandler`, `AuthenticationFailureHandler`, `UserDetailsService`, `UserDetails`, `AuthenticationEntryPoint`, `AccessDeniedHandler` 정도를 살펴보려 한다.
 
-![](security-filter-invocation.png)
+![](images/security-filter-invocation.png)
 
 
 

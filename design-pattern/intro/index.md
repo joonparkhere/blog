@@ -1,12 +1,11 @@
 ---
-
-title: 디자인 패턴 GURU - Intro
-description: Refactoring Guru 서적을 기반으로한 디자인 패턴 학습 Intno
-date: 2021-12-31
+title: "[디자인 패턴 GURU] Intro"
+summary: Refactoring Guru 서적을 기반으로한 디자인 패턴 학습 Intno
+date: 2021-12-30
+pin: false
 image: images/index-design-patterns.png
-categories:
-- Software Enginerring
 tags:
+- Software Enginerring
 - Design Pattern
 ---
 
