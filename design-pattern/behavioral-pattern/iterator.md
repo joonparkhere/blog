@@ -8,6 +8,7 @@ tags:
 - Software Engineering
 - Design Pattern
 - Go
+- Java
 ---
 
 ## Iterator
@@ -138,7 +139,61 @@ func TestAfter(t *testing.T) {
 
 ### Real Example
 
+실 적용 예제로, Java의 `Enumeration` 인터페이스가 있다.
 
+```java
+public interface Enumeration<E> {
+    boolean hasMoreElements();
+
+    E nextElement();
+    
+    default Iterator<E> asIterator() {
+        return new Iterator<>() {
+            @Override public boolean hasNext() {
+                return hasMoreElements();
+            }
+            @Override public E next() {
+                return nextElement();
+            }
+        };
+    }
+}
+```
+
+구현체로 Spring에서 제공하는 `Enumerator`가 있으며, Spring Security에서 Request Header 이름들을 훑을 때 사용한다.
+
+```java
+public class Enumerator<T> implements Enumeration<T> {
+    private Iterator<T> iterator = null;
+    
+	public Enumerator(Collection<T> collection) {
+		this(collection.iterator());
+	}
+    
+    // ...
+    
+    @Override
+	public boolean hasMoreElements() {
+		return (this.iterator.hasNext());
+	}
+    
+	@Override
+	public T nextElement() throws NoSuchElementException {
+		return (this.iterator.next());
+	}
+}
+```
+
+```java
+class SavedRequestAwareWrapper extends HttpServletRequestWrapper {
+    // ...
+    
+    @Override
+	public Enumeration getHeaderNames() {
+		return new Enumerator<>(this.savedRequest.getHeaderNames());
+	}
+}
+```
 
 ### Note
 

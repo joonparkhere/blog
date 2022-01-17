@@ -184,7 +184,9 @@ func TestAfter(t *testing.T) {
 
 ### Real Example
 
+![MVC Example[^2]](images/mediator-mvc.png)
 
+MVC 패턴에서 **Front Controller (Dispatcher Servlet)**이 **Controller**와 **View Template** 사이의 Mediator 역할을 수행한다.
 
 ### Note
 
@@ -194,3 +196,4 @@ func TestAfter(t *testing.T) {
 > Mediator 객체는 God Object가 되어야 함을 유의해야 한다.
 
 [^1]: [Mediator Origin](https://refactoring.guru/design-patterns/mediator)
+[^2]: [DZone Article](https://dzone.com/articles/mediator-pattern-1)

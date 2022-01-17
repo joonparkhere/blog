@@ -8,6 +8,7 @@ tags:
 - Software Engineering
 - Design Pattern
 - Go
+- Java
 ---
 
 ## Command
@@ -143,7 +144,29 @@ func TestAfter(t *testing.T) {
 
 ### Real Example
 
+Java의 `Runnable` 인터페이스가 실 적용 예제 중 하나이다.
 
+```java
+public interface Runnable {
+    public abstract void run();
+}
+```
+
+```java
+public class ThreadCommand {
+    public static void main(String args[]) {
+        command = new MyRunnable()
+        Thread t = new Thread(command);
+        t.start()
+    }
+}
+
+class MyRunnable implements Runnable {
+    public void run() {
+        // do something
+    }
+}
+```
 
 ### Note
 
