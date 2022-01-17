@@ -226,7 +226,61 @@ func TestAfter(t *testing.T) {
 
 ### Real Example
 
+아래는 Java의 `BigDecimal` 클래스와 `valueOf()` 메서드 일부이다.
 
+```java
+// Cache of common small BigDecimal values.
+private static final BigDecimal ZERO_THROUGH_TEN[] = {
+    new BigDecimal(BigInteger.ZERO,       0,  0, 1),
+    new BigDecimal(BigInteger.ONE,        1,  0, 1),
+    new BigDecimal(BigInteger.TWO,        2,  0, 1),
+    new BigDecimal(BigInteger.valueOf(3), 3,  0, 1),
+    new BigDecimal(BigInteger.valueOf(4), 4,  0, 1),
+    new BigDecimal(BigInteger.valueOf(5), 5,  0, 1),
+    new BigDecimal(BigInteger.valueOf(6), 6,  0, 1),
+    new BigDecimal(BigInteger.valueOf(7), 7,  0, 1),
+    new BigDecimal(BigInteger.valueOf(8), 8,  0, 1),
+    new BigDecimal(BigInteger.valueOf(9), 9,  0, 1),
+    new BigDecimal(BigInteger.TEN,        10, 0, 2),
+};
+
+// Cache of zero scaled by 0 - 15
+private static final BigDecimal[] ZERO_SCALED_BY = {
+    ZERO_THROUGH_TEN[0],
+    new BigDecimal(BigInteger.ZERO, 0, 1, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 2, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 3, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 4, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 5, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 6, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 7, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 8, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 9, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 10, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 11, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 12, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 13, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 14, 1),
+    new BigDecimal(BigInteger.ZERO, 0, 15, 1),
+};
+
+public static BigDecimal valueOf(long val) {
+    if (val >= 0 && val < ZERO_THROUGH_TEN.length)
+        return ZERO_THROUGH_TEN[(int)val];
+    else if (val != INFLATED)
+        return new BigDecimal(null, val, 0, 0);
+    return new BigDecimal(INFLATED_BIGINT, val, 0, 0);
+}
+
+static BigDecimal zeroValueOf(int scale) {
+    if (scale >= 0 && scale < ZERO_SCALED_BY.length)
+        return ZERO_SCALED_BY[scale];
+    else
+        return new BigDecimal(BigInteger.ZERO, 0, scale, 1);
+}
+```
+
+- 자주 쓰이는 객체는 `static`으로 먼저 만들어 놓고, 클라이언트 요청이 미리 만들어놓은 수의 범위에 있을 때 새로 객체를 만들지않고 바로 반환한다.
 
 ### Note
 

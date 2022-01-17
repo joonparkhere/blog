@@ -154,7 +154,68 @@ func TestAfter(t *testing.T) {
 
 ### Real Example
 
+Spring Security의 Filter Chain을 살펴보려 한다. 아래는 대략적인 Filter들의 종류와 각 Filter들이 수행하는 동작이다.
 
+![Kinds of Filter[^2]](images/cor-security-filters.png)
+
+![Operation of Filters[^2]](images/cor-security-filter-invocation.png)
+
+```java
+public interface Filter {
+       public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException;
+}
+```
+
+```java
+public abstract class AbstractAuthenticationProcessingFilter extends GenericFilterBean implements ApplicationEventPublisherAware, MessageSourceAware {
+    @Override
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+		doFilter((HttpServletRequest) request, (HttpServletResponse) response, chain);
+	}
+
+	private void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+		if (!requiresAuthentication(request, response)) {
+			chain.doFilter(request, response);
+			return;
+		}
+		try {
+			Authentication authenticationResult = attemptAuthentication(request, response);
+			if (authenticationResult == null) {
+				// return immediately as subclass has indicated that it hasn't completed
+				return;
+			}
+			this.sessionStrategy.onAuthentication(authenticationResult, request, response);
+			// Authentication success
+			if (this.continueChainBeforeSuccessfulAuthentication) {
+				chain.doFilter(request, response);
+			}
+			successfulAuthentication(request, response, chain, authenticationResult);
+		}
+		catch (InternalAuthenticationServiceException failed) { /* ... */ }
+		catch (AuthenticationException ex) { /* ... */ }
+	}
+}
+```
+
+```java
+public class UsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
+    @Override
+	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+		if (this.postOnly && !request.getMethod().equals("POST")) {
+			throw new AuthenticationServiceException("Authentication method not supported: " + request.getMethod());
+		}
+		String username = obtainUsername(request);
+		username = (username != null) ? username : "";
+		username = username.trim();
+		String password = obtainPassword(request);
+		password = (password != null) ? password : "";
+		UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(username, password);
+		// Allow subclasses to set the "details" property
+		setDetails(request, authRequest);
+		return this.getAuthenticationManager().authenticate(authRequest);
+	}
+}
+```
 
 ### Note
 
@@ -164,3 +225,4 @@ func TestAfter(t *testing.T) {
 > Handler Chain에서 처리되지 않는 종류의 요청에 대한 예외 처리가 필요하다.
 
 [^1]: [Chain of Responsibility Origin](https://refactoring.guru/design-patterns/chain-of-responsibility)
+[^2]: [tmdgh0221 Velog Post](https://velog.io/@tmdgh0221/Spring-Security-%EC%99%80-OAuth-2.0-%EC%99%80-JWT-%EC%9D%98-%EC%BD%9C%EB%9D%BC%EB%B3%B4#spring-security)

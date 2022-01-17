@@ -8,6 +8,7 @@ tags:
 - Software Engineering
 - Design Pattern
 - Go
+- Java
 ---
 
 ## Proxy
@@ -120,7 +121,23 @@ func TestAfter(t *testing.T) {
 
 ### Real Example
 
+![Spring Security FilterChainProxy[^2]](images/proxy-filterchainproxy.png)
 
+Spring Security의 `FilterChainProxy`를 살펴보려 한다. 이는 일종의 특수 필터로 `SecurityFilterChain`을 통해 클라이언트 요청을 다수의 Filter 객체에 위임한다.
+
+```java
+@Configuration
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.mvcMatcher("/foo/**");
+    }
+}
+```
+
+![FilterChainProxy Operation[^2]](images/proxy-security-filters-dispatch.png)
+
+![Debug Example[^2]](images/proxy-securityFilterChain_foo.png)
 
 ### Note
 
@@ -139,4 +156,5 @@ func TestAfter(t *testing.T) {
 - **Cacching Request Results (Caching Proxy)**
 
 [^1]: [Proxy Origin](https://refactoring.guru/design-patterns/proxy)
+[^2]: [yaho1024 Velog Post](https://velog.io/@yaho1024/Spring-Security-FilterChainProxy)
 
