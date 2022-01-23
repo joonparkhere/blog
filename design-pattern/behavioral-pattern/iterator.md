@@ -177,7 +177,7 @@ public class Enumerator<T> implements Enumeration<T> {
 		return (this.iterator.hasNext());
 	}
     
-	@Override
+    @Override
 	public T nextElement() throws NoSuchElementException {
 		return (this.iterator.next());
 	}
