@@ -138,7 +138,7 @@ func TestAfter(t *testing.T) {
 }
 ```
 
-### Real Example
+### Plus
 
 Observer 패턴과 유사한 개발 패러다임 리액티브 프로그래밍이 존재한다. 스프링 WebFlux가 이 형태를 띠며, 발행 (Publisher) - 구독 (Subsciber) 패턴이라고도 한다. [리액티브 선언문](https://www.reactivemanifesto.org/ko)에서 아래와 같이 설명하고 있다.
 
