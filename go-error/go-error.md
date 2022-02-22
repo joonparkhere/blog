@@ -1,14 +1,14 @@
 ---
-title:
-date:
+title: "Go언어에서의 에러 핸들링"
+date: 2022-02-22
 ---
-## Go언어 에러 핸들링
+# Go언어 에러 핸들링
 
 이 글은 [Dave Cheney Blog](https://dave.cheney.net/2016/04/27/dont-just-check-errors-handle-them-gracefully) 글을 토대로 구글링 한 것들을 종합한 내용이다. 타 언어와 달리 Exception이 없는 구조의 Go언어에서 에러를 핸들링하는 방법을 알아보고자 한다.
 
 ## Error는 그냥 값일 뿐이다
 
-본문은 Go언어에서  에러 핸들링하는 더 나은 전략이 무엇일까 하는 고민으로 부터 출발한 글이다. 하지만 스탠다드한 (일종의 정답) 방법은 존재하지 않는다는 결론을 내렸다. 그 대신 에러 처리가 대략 세 가지 정도의 카테고리로 분류될 수 있다고 생각한다.
+본문은 Go언어에서 에러 핸들링하는 더 나은 전략이 무엇일까 하는 고민으로부터 출발한 글이다. 하지만 스탠다드한 방법 (일종의 정답) 은 존재하지 않는다는 결론을 내렸다. 그 대신 에러 처리가 대략 세 가지 정도의 카테고리로 분류될 수 있다고 생각한다.
 
 ---
 
@@ -184,15 +184,90 @@ func AuthenticateRequest(r *Request) error {
 
 ### Error에 내용 추가하기
 
+에러에 Context 정보를 추가하는 방법으로 적절한 기능을 제공하는 [Errors](https://pkg.go.dev/github.com/pkg/errors) 패키지에는 두 개의 주요 함수가 있다.
 
+```go
+// Wrap annotates cause with a message.
+func Wrap(cause error, message string) error
+
+// Cause unwraps an annotated error.
+func Cause(err error) error
+```
+
+`Wrap()` 함수는 기존의 에러를 메시지로 감싸서 Wraping된 에러를 만들어내고, `Cause()` 함수는 그 반대다. 이 두 함수를 이용해서, 어떤 에러이든 Context 정보를 추가할 수 있고, 에러의 내부를 조사하거나 복원할 수도 있다.
+
+```go
+func ReadFile(path string) ([]byte, error) {
+    f, err := os.Open(path)
+    if err != nil {
+        return nil, errors.Wrap(err, "open failed")
+    }
+    defer f.Close()
+    
+    buf, err := ioutil.ReadAll(f)
+    if err != nil {
+        return nil, errors.Wrap(err, "read failed")
+    }
+    return buf, nil
+}
+
+func ReadConfig() ([]byte, error) {
+    home := os.Getenv("HOME")
+    config, err := ReadFile(filepath.Join(home, ".settings.xml"))
+    return config, errors.Wrap(err, "could not read config")
+}
+```
+
+예제 코드의 `ReadConfig` 함수에서 에러가 발생하면 Wrapping한 덕분에 아래처럼 나이스한 추가 정보를 볼 수 있다.
+
+```
+could not read config: open failed: open /Users/tmp/.settings.xml:
+no such file or directory
+```
+
+이처럼 에러를 Wrapping하면 에러 스택을 만들어내기 때문에 추가적인 디버깅 정보를 얻을 수 있다.
 
 ---
 
 ## Error를 딱 한번만 처리해라
 
+여기서 에러를 처리한다 함은, 에러 값을 조사하고 어떻게 처리할 지 결정을 내린다는 의미이다. 발생한 에러에 대해 무언가를 결정할 일이 없다면 단순히 에러를 무시하기도 하며, 하나의 에러에 대해 두 번 이상의 로직을 처리되기도 한다.
+
+```go
+func Write(w io.Writer, buf []byte) {
+    w. Write(buf) // ignore error
+}
+```
+
+```go
+func Write(w io.Write, buf []byte) error {
+    _, err := w.Write(buf)
+    if err != nil {
+        log.Println("unable to write: ", err)
+        return err
+    }
+    return nil
+}
+```
+
+`Write()` 함수에서 에러가 발생하면 로그 기록을 남기고 호출자에게 리턴된다. 그리고 그 호출자 또한 로그를 남기고 리턴을 하며, 프로그램 최상단까지 올라갈 것이다. 즉, 로그 파일에 중복된 정보가 계속 쌓여가게 된다. 그러면서도 어떤 추가적인 Context 정보 없이 처음 발생한 에러에 대한 정보만을 받게 된다. 위에서 사용한 `Wrap()` 함수를 사용하여 Context 정보를 넣어주고, 로그 기록 등의 에러 처리는 한 번만 하도록 해야한다.
+
+---
+
 ## 결론
+
+결록적으로, 에러는 패키지의 Public API 중의 한 부분이다. 그러니까 에러도 다른 파트들 다루듯이 다루어야 한다.
+
+최대한의 유연함을 위해 모든 에러를 Opaque하게 처리하려는 노력을 하는 게 바람직하다. 그렇게 처리할 수 없는 상황에서는 Type이나 Value말고 Behavior에 대해 Assertion 해야한다.
+
+또한 Sentinel 에러 사용 횟수를 최소한으로 줄이고, 되도록 에러들을 감싸서 Opaque 에러로 바꾸어야 한다.
+
+마지막으로 에러를 점검할 필요가 있을 경우에는 `Cause()` 함수를 이용해 원래의 에러를 복원하면 된다.
+
+---
 
 ## 참고 자료
 
 - [Dave Cheney Blog](https://dave.cheney.net/2016/04/27/dont-just-check-errors-handle-them-gracefully)
+- [Rain.i Blog](http://cloudrain21.com/golang-graceful-error-handling#handle-errors-gracefully)
 
