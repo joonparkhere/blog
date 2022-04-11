@@ -668,29 +668,332 @@ HTTP 헤더가 단일 프레임보다 큰 경우 추가 `HEADERS` 프레임보�
 
 - `COMPLETE` (0x2)
 
+## HTTP/2 서버 푸시란?
 
+HTTP/2 서버 푸시를 사용하면 클라이언트가 요청하지 않은 추가 리소스를 보낼 수 있다. 이전 HTTP에서는 첫 리소스 요청에 대한 응답을 받은 후, 추가로 필요한 리소스를 다시 요청하고 응답받는 방식이어서 하나 이상의 라운드 트립이 더 소요된다. 한 웹 사이트를 렌더링할 때 필요한 HTML, CSS, JS 파일들 (이미지를 제외하더라도) 을 모두 응답받을 때까지 꽤나 많은 시간이 소요되는데, 이는 분명한 낭비이다.
 
+이런 현상을 조금이나마 막기 위해 필수적인 CSS 혹은 JS 코드를  HTML에 인라인시키기도 한다. 이는 대개 첫 요청 및 응답에 대해서는 괜찮은 성능상 이점이 있지만, 어디까지나 임시방편적인 해결책이다. 보다 나은 해결책을 제시하는 것이 HTTP/2 푸시가 하려는 일이다.
 
+HTTP/2 푸시는 기존의 패러다임 `하나의 요청 == 하나의 응답`을 깨뜨린다. 서버가 하나의 요청에 대해 여러 응답으로 답할 수 있게 된다. 이를 올바르게 사용하면 로드 시간을 개선할 수 있지만, 클라이언트가 사용하지 않거나 이미 캐싱하고 있는 리소스를 과다하게 푸시하라면 로드 시간을 오히려 저해할 수도 있다. 즉, 적절한 서버 푸시가 주요 포인트다.
 
+> **HTTP/2 푸시와 웹소켓**
+>
+> HTTP/2 푸시는 클라이언트가 요청을 보내야만 서버가 여러 응답을 할 수 있다. 서버가 자의적으로 클라이언트 측에서 어떤 리소스를 필요로 할 것이라고 예상하여 푸시하는 것은 불가능하다. 즉 웹소켓과는 달리, HTTP/2는 엄밀히 양방향은 아니다. 모든 것은 여전히 클라이언트 측의 요청에서 시작된다.
 
+## 푸시 방식
 
+특정 웹 서버는 HTTP `link` 헤더를 이용하는 등, 푸시 방식은 각 웹 서버마다 다르다.
 
+### HTTP link 헤더를 사용한 푸시
 
+많은 웹 서버와 일부 CDN은 HTTP `link` 헤더를 사용해서 클라이언트가 웹 서버에게 푸시하라고 알린다. 웹 서버가 이 헤더를 보면 헤더에 참조된 리소스를 푸시하는 방식이다.
 
+```
+Header add Link "</assets/css/common.css>;as=style;rel=preload"
+```
 
+혹은 특정 경로나 파일 유형에 대해서만 푸시를 적용하고자 한다면, 아래와 같이 사용된다.
 
+```
+<FilesMatch "index.html">
+    Header add Link "</assets/css/common.css>;as=style;rel=preload"
+</FilesMatch>
+```
 
+`as=style` 속성은 리소스의 유형을 나타내며 (Optional), `rel=preload` 속성은 웹 서버에게 해당 리소스가 푸시되어야 함을 보여주고자 설정된다.
 
+> **프리로드 HTTP 헤더와  HTTP/2 푸시**
+>
+> 프리로드 링크 헤더는 HTTP/2보다 전에 등장했으며, 원래는 클라이언트에게 주는 힌트 용도였다. 이 헤더를 사용하면 브라우저가 리소스의 다운로드 필요성 유무를 판단하기까지 기다리지 않고 리소스를 곧 바로 가져올 수 있다. HTTP/2에서 프리로드 링크 헤더는 더 나아가 리소스를 선행적으로 보내도록 서버 푸시를 구현하는 것으로 목적이 변경되었다. 만약 원본 프리로드 헤더를 사용하며 리소스를 푸시하고 싶지 않다면 `nopush` 속성을 사용할 수 있다.
+>
+> ```
+> Header add Link "</assets/css/common.css>;as=style;rel=preload;nopush"
+> ```
 
+### HTTP/2 푸시 보기
 
+푸시된 리소스는 크롬 개발자 도구 Network 탭에서 Initiator 항목 열에 표시된다.
 
+![](images/chrome-dev-initiator.png)
 
+> 푸시된 리소스는 페이지에서 사용되는 경우에만 크롬 개발자 도구의 네트워크 탭에 표시된다. HTTP 링크 헤더 방식으로 리소스가 푸시되었다면 프리로더 사용으로 간주되므로 모두 표시되겠지만, 다른 방식으로 푸시했다면 사용된 리소스만 나타난다.
 
+`nghttp`를 이용해서는 아래의 명령어로 가능하다.
 
+```bash
+nghttp -anv https://www.tunetheweb.com/performance/
+# -a: 페이지가 필요로 하는 모든 리소스를 요청
+# -n: 다운로드한 데이터를 스크린에 표시하지 않음
+# -v: HTTP/2 프레임을 보여주는 장황한 출력
+```
 
+연결을 맺고 `SETTING`와 `PRIORITY` 프레임으로 설정을 한 다음, `HEADERS` 프레임을 사용해 페이지를 요청한다.
 
+```
+[  0.336] send HEADERS frame <length=53, flags=0x25, stream_id=13>
+          ; END_STREAM | END_HEADERS | PRIORITY
+          (padlen=0, dep_stream_id=11, weight=16, exclusive=0)
+          ; Open new stream
+          :method: GET
+          :path: /performance/
+          :scheme: https
+          :authority: www.tunetheweb.com
+          accept: */*
+          accept-encoding: gzip, deflate
+          user-agent: nghttp2/1.47.0
+```
 
+그리고 요청한 페이지를 받기 전에 서버에서 푸시한 리소스를 가리키는 `PUSH_PROMISE` 프레임을 수신한다.
 
+```
+[  0.486] recv (stream_id=13) :scheme: https
+[  0.486] recv (stream_id=13) :authority: www.tunetheweb.com
+[  0.486] recv (stream_id=13) :path: /assets/css/common.css
+[  0.486] recv (stream_id=13) :method: GET
+[  0.486] recv (stream_id=13) accept: */*
+[  0.486] recv (stream_id=13) accept-encoding: gzip, deflate
+[  0.486] recv (stream_id=13) user-agent: nghttp2/1.47.0
+[  0.486] recv (stream_id=13) host: www.tunetheweb.com
+[  0.486] recv PUSH_PROMISE frame <length=73, flags=0x04, stream_id=13>
+          ; END_HEADERS
+          (padlen=0, promised_stream_id=2)
+[  0.486] recv (stream_id=13) :scheme: https
+[  0.486] recv (stream_id=13) :authority: www.tunetheweb.com
+[  0.486] recv (stream_id=13) :path: /assets/js/common.js
+[  0.486] recv (stream_id=13) :method: GET
+[  0.486] recv (stream_id=13) accept: */*
+[  0.486] recv (stream_id=13) accept-encoding: gzip, deflate
+[  0.486] recv (stream_id=13) user-agent: nghttp2/1.47.0
+[  0.486] recv (stream_id=13) host: www.tunetheweb.com
+[  0.486] recv PUSH_PROMISE frame <length=27, flags=0x04, stream_id=13>
+          ; END_HEADERS
+          (padlen=0, promised_stream_id=4)
+```
 
+`PUSH_PROMISE` 프레임은 `HEADERS` 프레임과 유사하지만, 다음과 같은 2가지 차이점이 있다.
 
+- 이 프레임은 서버가 브라우저에게 보낸 것으로, 클라이언트에게 추가 리소스를 보낸다고 알려주는 것이다.
+- 푸시된 리소스에 대한 스트림 ID인 `promised_stream_id`가 포함된다. 서버가 보낸 스트림에 대해서는 짝수 ID가 할당되므로, 위 예제의 경우 ID가 2와 4인 스트림에 대해 추가 리소스가 푸시될 것임을 알 수 있다.
+
+이후 서버는 원래 요청받은 리소스를 `HEADERS` 프레임과 `DATA` 프레임을 사용해 반환한다. 그런 다음 푸시된 리소스를 보내는데, 마찬가지로 `HEADERS` 프레임과 `DATA` 프레임을 사용한다.
+
+```
+[  0.486] recv (stream_id=13) :status: 200
+[  0.486] recv (stream_id=13) date: Fri, 08 Apr 2022 12:19:10 GMT
+[  0.486] recv (stream_id=13) server: Apache
+...etc
+[  0.486] recv (stream_id=13) content-type: text/html; charset=utf-8
+[  0.486] recv (stream_id=13) push-policy: default
+[  0.486] recv HEADERS frame <length=1424, flags=0x04, stream_id=13>
+          ; END_HEADERS
+          (padlen=0)
+          ; First response header
+[  0.486] recv DATA frame <length=1291, flags=0x00, stream_id=13>
+[  0.486] recv DATA frame <length=1291, flags=0x00, stream_id=13>
+[  0.487] recv DATA frame <length=1291, flags=0x00, stream_id=13>
+[  0.487] recv DATA frame <length=1291, flags=0x00, stream_id=13>
+[  0.487] recv DATA frame <length=1291, flags=0x00, stream_id=13>
+[  0.626] recv DATA frame <length=1291, flags=0x00, stream_id=13>
+[  0.627] recv DATA frame <length=989, flags=0x01, stream_id=13>
+          ; END_STREAM
+```
+
+```
+[  0.627] recv (stream_id=2) :status: 200
+[  0.627] recv (stream_id=2) date: Fri, 08 Apr 2022 12:19:10 GMT
+[  0.627] recv (stream_id=2) server: Apache
+...etc
+[  0.627] recv (stream_id=2) content-type: text/css; charset=utf-8
+[  0.627] recv HEADERS frame <length=62, flags=0x04, stream_id=2>
+          ; END_HEADERS
+          (padlen=0)
+          ; First push response header
+[  0.627] recv (stream_id=4) :status: 200
+[  0.627] recv (stream_id=4) date: Fri, 08 Apr 2022 12:19:10 GMT
+[  0.627] recv (stream_id=4) server: Apache
+...etc
+[  0.627] recv (stream_id=4) content-type: application/javascript; charset=utf-8
+[  0.627] recv HEADERS frame <length=71, flags=0x04, stream_id=4>
+          ; END_HEADERS
+          (padlen=0)
+          ; First push response header
+[  0.627] recv DATA frame <length=1291, flags=0x00, stream_id=2>
+[  0.627] recv DATA frame <length=1291, flags=0x00, stream_id=4>
+[  0.628] recv DATA frame <length=1291, flags=0x00, stream_id=2>
+[  0.628] recv DATA frame <length=22, flags=0x01, stream_id=4>
+          ; END_STREAM
+[  0.628] recv DATA frame <length=1291, flags=0x00, stream_id=2>
+[  0.628] recv DATA frame <length=1291, flags=0x00, stream_id=2>
+[  0.629] recv DATA frame <length=739, flags=0x01, stream_id=2>
+          ; END_STREAM
+```
+
+꼼꼼하게 살펴보면 클라이언트의 원본 요청에 대해서는 동일한 스트림 ID (13) 상으로 응답이 보내졌고, 서버 푸시에 대해서는 별도의 스트림 ID (2, 4) 로 응답이 보내졌다.
+
+### 링크 헤더를 이용한 다운스트림 시스템에서의 푸시
+
+![](images/server-push-proxy-link-header.png)
+
+애플리케이션 서버가 HTTP/2 푸시를 지원하는 웹 서버를 통해 프록시되는 경우 위의 그림처럼 클라이언트는 웹 서버에게 리소스를 푸시해달라고 요청하고, 웹 서버는 필요한 리소스들을 애플리케이션 서버로부터 받아서 전달해주게 된다. 링크 헤더를 사용하면 애플리케이션이 웹 서버에게 어떤 것을 푸시해야하는 지 알 수 있기에 가능하다.
+
+### 이른 시점에 푸시
+
+HTTP 링크 헤더를 설정하는 것 외에도, 웹 서버 푸시 구현에 따라서 다른 방식도 존재한다. 예를 들어 아파치와 엔진엑스는 아래와 같이 사용한다.
+
+```
+H2PushResource add /assets/css/common.css # 아파치
+```
+
+```
+http2_push /assets/css/common.css; # 엔진엑스
+```
+
+HTTP 링크 헤더 방식보다 직접 푸시하는 것이 갖는 이점은 서버가 링크된 헤더를 체크하려고 요청을 기다린 다음에야 푸시할 필요가 없다는 점이다. 그 대신 서버가 원본 요청을 처리하는 동안 의존된 리소스를 푸시한다. 여기서 발생할 수 있는 문제는, 푸시되는 리소스가 서버 내에서 혹은 다른 백엔드 애플리케이션으로부터 전달받는데 오래 걸리는 경우다.
+
+![](images/push-with-loading.png)
+
+![](images/push-with-loading-earlier.png)
+
+첫번째 과정은 HTTP가 보였던 HOL (Head-of-Line) 블로킹 문제를 연상시킨다. 따라서 이보다는 웹 서버가 먼저 리소스를 푸시하는 방식의 이른 푸시 방식으로 개선하여 사용된다.
+
+`H2PushResource`와 같은 웹 서버의 이른 푸시 명령 사용의 단점은 백엔드 애플리케이션으로부터 푸시할 리소스를 전달받는 경우를 컨트롤할 수 없다는 것이다. 이를 해결하고자 새로운 HTTP 상태 코드 103을 사용해서, 프리로드 HTTP 링크 헤더를 통한 리소스 요구 사항을 알려줄 수 있도록 한다. 다만 100번대의 상태 코드가 그렇듯이, 웹 서버에 따라 무시될 수 있다.
+
+```
+HTTP/1.1 103 Early Hints
+Link: </assets/css/common.css>;rel=preload;as=style
+
+HTTP/1.1 200 OK
+Content-Type: text/html
+Link: </assets/css/common.css>;rel=preload;as=style
+
+<!DOCTYPE html>
+...etc
+```
+
+![](images/push-with-loading-application-earlier.png)
+
+### 다른 방식의 푸시
+
+꼭 웹 서버를 사용해야만 푸시가 가능한 것은 아니다. 일부 백엔드 애플리케이션 서버를 이용하더라도 개발자가 푸시할 수 있다.
+
+## HTTP/2가 브라우저에서 동작하는 방식
+
+브라우저로 푸시된 리소스는 웹 페이지에 직접 푸시되는 것이 아니라 캐시로 푸시된다. 페이지에 어떤 리소스가 필요하다고 확인되면, 서버에 바로 요청하지 않고 먼저 캐시에서 찾아본 다음 로드하는 방식이다. 여기서 사용되는 캐시는 일반 HTTP 캐시와는 다른 특수한 HTTP/2 푸시 캐시 (별도의 메모리) 를 사용해 구현된다.
+
+### 푸시 캐시 동작 방식 확인
+
+푸시된 리소스는 브라우저가 리소스를 요청할 때 사용되는 별도 메모리에 보관된다. 크로미움 기반 브라우저 (e.g., 크롬, 오페라 등) 의 경우, 신뢰할만한 인증서를 갖추지 않은 서버에서 푸시된 리소스는 캐싱하지 않는다.
+
+푸시 캐시는 브라우저가 리소스를 탐색하는 첫 우선 순위가 아니다. 보통 브라우저는 푸시 캐시보다 HTTP 캐시에 먼저 접근하여 확인한다. 더불어 푸시된 리소스가 캐시된 리소스보다 더 새로운 경우에도 브라우저는 여전히 캐시된 리소스를 선호한다. 아래는 페이지가 요청되고 [1] 반환될 때 [2] 모든 푸시된 리소스는 HTTP/2 푸시 캐시에 들어가고 [3] 웹 서버로의 다른 요청이 일어나기 전에 캐시를 체킹한다 [4] 과정의 예시이며, 각 캐시의 간략한 설명을 적어놓았다.
+
+![](images/push-cache-work.png)
+
+- 이미지 캐시
+
+  수명이 짧은 메모리상의 캐시로, 페이지에 대한 캐시다. 사용자가 페이지에서 다른 곳으로 브라우징하면 이 캐시는 없어진다.
+
+- 프리로드 캐시
+
+  수명이 짧은 메모리상의 캐시로, 프리로드된 캐시를 저장하는 데 사용된다.
+
+- 서비스 워커
+
+  웹 페이지와 별개로 실행되고 웹 페이지와 웹 사이트의 중개자 역할을 하는 백그라운드 애플리케이션이다. 서비스 워커는 도메인에 따라 별도의 캐시를 갖는다.
+
+- HTTP 캐시
+
+  디스크 기반의 지속성 캐시로, 브라우저에서 공유되고 모든 도메인에 대해 사용된다.
+
+- HTTP/2 푸시 캐시
+
+  수명이 짧은 메모리상의 캐시로, HTTP 요청이 발생할 때 체킹되며 가장 낮은 우선 순위를 갖는다.
+
+### RST_STREAM 프레임으로 푸시 거부
+
+클라이언트는 `CANCEL`이나 `REFUSED_STREAM` 코드를 설정한 `RST_STREAM` 프레임을 푸시 스트림에 송신해서 푸시되는 리소스를 거절할 수 있다. 이는 브라우저가 이미 푸시되는 리소스를 갖고 있는 경우나 유저가 페이지 로딩 중 다른 페이지로 이동하여 더 이상 리소스를 필요로 하지 않는 경우 등에 사용될 수 있다.
+
+불필요한 리소스가 과도하게 푸시되는 것을 막는 목적으로는 `RST_STREAM` 프레임을 사용하는 게 좋은 방법이지만, 이 프레임을 서버로 보내는 데 시간이 걸려 즉각적인 대응이 어렵다는 문제가 있다. 따라서 `RST_STREAM` 프레임을 잘못 푸시된 리소스를 제어하는 방법으로 사용하면 안된다.
+
+## 조건부로 푸시하는 방법
+
+HTTP/2 푸시를 사용하는 데 큰 리스크 중 하나는 리소스를 불필요하게 푸시할 수 있다는 점이다. 예를 들어 CSS 파일을 푸시하도록 정책이 정해진 경우 첫 요청에 대한 페이지 로드 시간이 개선될 수 있지만, 유저가 사이트를 둘러보는 내내 모든 페이지 요청에서 CSS 파일이 계속 푸시되어 이미 리소스를 갖고 있음에도 불필요하게 푸시될 수 있다.
+
+### 서버 측에서 푸시 추적
+
+서버가 특정 클라이언트 연결에 대해 푸시된 리소스가 무엇인지 기록하는 방식을 도입해 조건부로 푸시하도록 만들 수 있다. 이 방식의 문제는 서버가 푸시해야 하는지 아닌지를 불완전한 상태로 추측해야 한다는 것이다. 예를 들어 브라우저 캐시가 지워졌다면 리소스를 사용할 수 없겠지만, 서버는 여전히 해당 리소스를 푸시하지 않을 것이다. 또한 리소스 추적도 하나의 비용이므로 예상치 못한 문제가 발생할 수 있다. 즉, 이 방법은 Stateless한 HTTP 프로토콜에 상태를 기록하는 시도로, 최선의 방법은 아닐 것이다.
+
+### 쿠키 기반 푸시 사용
+
+리소스가 푸시되었다면 쿠키를 이용해, 클라이언트 측 (`LocalStorage`, `SessionStorage` 등) 에 기록하여 푸시 여부를 결정하도록 할 수 있다. 리소스를 푸시할 때 해당 세션에 유효한 쿠키를 설정하거나, 푸시된 리소스와 동일한 기간동안 유효한 쿠키를 설정하는 식이다. 페이지 요청이 들어오면 먼저 쿠키 존재 여부를 확인하고, 쿠키가 없으면 해당 리소스는 캐싱되지 않았을 확률이 높으므로 푸시하고 쿠키를 설정한다.
+
+이 방식은 서버 측에 어떤 것도 기록될 필요가 없고, 조금 더 브라우저 상태에 기반을 두고 추적한다는 면에서 나은 대안이다. 그러나 쿠키는 독립적으로 재설정될 수 있기에 여전히 문제가 있다.
+
+### Cache Digest 사용
+
+캐시 다이제스트는 브라우저 캐시에 무엇이 있는지를 브라우저가 서버에게 알려줄 수 있게 함을 목적으로 한다. 연결이 맺어지면 브라우저는 `CACHE_DIGEST` 프레임을 보내는데, 여기에는 현재 도메인에 따라 HTTP 캐시에 저장되어 있는 모든 리소스가 나열되어 있다. 서버는 연결 별로 클라이언트의 캐시 내용을 기억하여, 리소스를 보내는 데에 따라 갱신도 할 수 있기에 위의 방식들보다 훨씬 개선된 방안이다.
+
+## 푸시할 대상
+
+### 무엇을 푸시할 수 있는가
+
+다음은 HTTP/2 푸시에 대한 기본 원칙 일부이다.
+
+- 클라이언트는 `SETTINGS` 프레임에서 `SETTINGS_ENABLE_PUSH` 옵션을 0으로 설정해서 푸시를 불가능하게 할 수 있다.
+- 푸시된 요청은 캐시 가능한 메서드이어야 한다. (`GET`, `HEAD`, 일부 `POST` 요청)
+- 푸시된 요청은 안전해야 한다. (보통 `GET`이나 `HEAD`)
+- 푸시된 요청은 요청 본문을 포함해서는 안된다.
+- 푸시도니 요청은 서버가 권한을 갖는 도메인에만 보내져야 한다.
+- 클라이언트는 푸시할 수 없다.
+- 리소스는 현재 요청의 응답으로만 푸시될 수 있다. 즉, 요청이 진행되고 있지 않다면 서버가 푸시를 시작할 수 없다.
+
+이러한 규칙 때문에 사실 `GET` 요청만 푸시된다.
+
+### 무엇을 푸시해야 하는가
+
+이상적으로는 페이지가 필요로 하는 핵심 리소스만을 푸시해야 한다. 페이지가 필요로 하는 모든 것을 푸시한다면, 푸시에 대한 처리 때문에 클라이언트가 요청한 다른 중요한 리소스 응답이 늦어질 것이다. 또한 리소스가 클라이언트의 캐시에 있는지 여부를 고려하여, 캐싱되지 않았을 확률이 높은 경우에만 푸시되어야 한다.
+
+HTTP/2 푸시를 사용해 유휴 네트워크 시간을 최대한 활용해야 한다. 크롬 팀의 경우 유휴 네트워크 시간을 채우는 데 필요한 최소한의 리소스만 푸시하라고 권고한다. 요컨대 과하게 푸시하기보다는 덜 하는 편이 낫다. 리소스를 푸시하지 않아서 일어날 수 있는 최악의 상황이라고 해봤자 하나의 라운드 트립만큼의 시간이 추가 소요되어 해당 리소스의 요청이 일어날 뿐이다.
+
+### 어떻게 푸시해야 하는가
+
+웹 사이트 개발자가 무엇을 푸시할지 결정했다면, 푸시를 어떻게 할지 전략을 고민해봐야 한다. 자바 서블릿 엔진인 Jetty는 푸시 전략으로 푸시 자동화를 시도한다. 요청의 `Referer` 헤더로 현재 요청과 다음 요청을 체킹하여, 다른 클라이언트에서 유사한 요청이 들어오면 추천 푸시 리소스를 구축한다.
+
+## HTTP/2 푸시 문제 해결
+
+푸시된 리소스를 확인할 수 없는 이유는 보통 아래와 같다.
+
+- 서버가 다른 Infrastructure 뒤에 위치해 있는가
+
+- 정상적으로 푸시되고 있는가
+
+  문제가 있는지 확인하기 위해서는 `nghttp`로 `PUSH_PROMISE` 프레임과 푸시 리소스를 확인해봐야 한다.
+
+- 리소스가 페이지에 필요한가
+
+- 사용하는 서버에 맞는 푸시 방법을 사용하고 있는가
+
+- 서버가 리소스를 푸시하지 않도록 명시적인 설정을 했는가
+
+- 올바른 리소스를 푸시 요청했는가
+
+## HTTP/2 푸시의 성능 영향
+
+푸시를 효과적으로 사용하는 주요 포인트는 연결이 사용되지 않을 때 대역폭의 공백을 사용하는 것이다. 특히 처리 시간이 오래 걸리는 동적 페이지의 경우, 이득이 더 클 수 있다.
+
+한편으로 크롬 팀은 현재 적은 수의 사이트만이 HTTP/2 푸시를 사용하고 있으며, 푸시가 성능을 오히려 더 해칠 수 있는 잠재적인 위험성이 있다고 주장한다. 가장 큰 문제는 푸시 기능의 낮은 사용률이며, 그 이유는 아마도 구현과 기대한 대로 동작하기까지의 설정 및 최적화가 복잡하기 때문일 것이다.
+
+## 푸시와 프리로드
+
+![](images/push-versus-preload.png)
+
+- 백엔드 애플리케이션 서버가 상태 코드 103 응답을 사용해 웹 서버에게 특정 리소스를 먼저 푸시하라고 알려준다.
+- 웹 서버는 클라이언트에게 리소스를 푸시한다.
+- HTTP/2 푸시 기능을 활용하므로, 대역폭 낭비 가능성이 존재한다.
+
+![](images/preload-versus-push.png)
+
+- 백엔드 애플리케이션 서버가 응답한 상태 코드 103을 그대로 클라이언트에게 전달한다.
+- 103 응답을 받은 클라이언트는 프리로드 HTTP 링크 헤더를 사용해 리소스를 프리로드한다.
+- 물론 위의 푸시를 사용할 때보다 조금 더 소요 시간이 크지만, 여전히 프리로드를 사용하지 않는 경우보다는 훨씬 빠르다.
+- 무엇보다 큰 이점은 푸시의 대역폭 낭비에 대한 우려를 하지 않아도 된다는 것이다.
 
