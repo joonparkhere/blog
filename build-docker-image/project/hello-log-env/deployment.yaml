@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: hello-log-env
+  name: hello-log-env
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-log-env
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: hello-log-env
+    spec:
+      containers:
+        - image: tmdgh0221/hello-log-env:latest
+          name: hello-log-env
+          ports:
+            - containerPort: 4040
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-log-env
+spec:
+  ports:
+    - name: hello-log-env
+      port: 4040
+      targetPort: 4040
+      protocol: TCP
+  selector:
+    app: hello-log-env
+  type: LoadBalancer
+status:
+  loadBalancer: {}
