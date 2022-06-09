@@ -18,9 +18,4 @@ WORKDIR /
 
 COPY --from=build /hello-log-env /hello-log-env
 
-ENV PORT=4040
-ENV MY_ENV=1234
-
-EXPOSE ${PORT}
-
 ENTRYPOINT ["/hello-log-env"]

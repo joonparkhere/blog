@@ -25,6 +25,14 @@ func main() {
 		return c.JSON(http.StatusOK, os.Getenv("MY_ENV"))
 	})
 
+	server.GET("/language", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, os.Getenv("LANGUAGE"))
+	})
+
+	server.GET("/function", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, os.Getenv("FUNCTION"))
+	})
+
 	port := os.Getenv("PORT")
 	log.Println("ENV PORT:", port)
 

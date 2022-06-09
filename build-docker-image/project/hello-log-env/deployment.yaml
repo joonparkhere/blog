@@ -1,9 +1,18 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hello-secret
+data:
+  PORT: NDA0MA==
+  LANGUAGE: Z29sYW5n
+  FUNCTION: bG9n
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: hello-log-env
   labels:
     app: hello-log-env
-  name: hello-log-env
 spec:
   replicas: 1
   selector:
@@ -16,28 +25,32 @@ spec:
       labels:
         app: hello-log-env
     spec:
-      containers:
-        - image: tmdgh0221/hello-log-env:latest
-          name: hello-log-env
-          ports:
-            - containerPort: 4040
-              protocol: TCP
-          resources: {}
       restartPolicy: Always
-status: {}
+      containers:
+        - name: hello-log-env
+          image: tmdgh0221/hello-log-env:latest
+          imagePullPolicy: Always
+          resources: {}
+#          ports:
+#            - containerPort: 4040
+#              protocol: TCP
+          env:
+            - name: MY_ENV
+              value: "1234"
+          envFrom:
+            - secretRef:
+                name: hello-secret
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: hello-log-env
 spec:
+  type: LoadBalancer
+  selector:
+    app: hello-log-env
   ports:
     - name: hello-log-env
       port: 4040
       targetPort: 4040
       protocol: TCP
-  selector:
-    app: hello-log-env
-  type: LoadBalancer
-status:
-  loadBalancer: {}
