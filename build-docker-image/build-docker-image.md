@@ -280,6 +280,55 @@ REPOSITORY       TAG       IMAGE ID       CREATED          SIZE
 hello-log-env    latest    8e3114563b54   17 seconds ago   550MB
 ```
 
+이때 사용하는 기기에 따라서 빌드되는 이미지 지원 아키텍처가 달라진다. 본인의 경우 M1 맥북을 사용하기 있기 때문에, `linux/arm64/v8`인 이미지가 빌드된다. 그러나 실제 배포하는 서버나 VM은 Intel 기반의 CPU를 사용하는 경우가 많기 때문에, 여러 아키텍처를 지원하는 이미지를 빌드할 필요가 있다.
+
+`buildx`라는 도커 툴을 사용하는데, 이는 여러 아키텍처에서 구동할 수 있는 이미지를 빌드하고, 푸시하는 등의 기능을 제공한다. 먼저 현재 드라이버를 살펴보자.
+
+```bash
+docker buildx ls
+```
+
+```
+NAME/NODE       	DRIVER/ENDPOINT		STATUS		PLATFORMS
+
+desktop-linux   	docker                  
+  desktop-linux 	desktop-linux   	running		linux/arm64, linux/amd64, ...
+
+default *       	docker                  
+  default       	default         	running		linux/arm64, linux/amd64, ...
+```
+
+이번에 사용할 드라이버를 만들고, 필요한 파일을 다운 및 실행한 후, 멀티 아키텍처 빌드를 하면 된다. 새로 생성하는 드라이버도 결국 도커 컨테이너가 하나 띄워지는 형태이다.
+
+`docker buildx create --name [builder_instance_name] --platform [fixed_platforms] --bootstrap --use`
+
+```bash
+docker buildx create --name multi-arch-builder --platform linux/arm64,linux/amd64 --bootstrap --use
+```
+
+명령어 실행 후 잘 설치되었는 지 확인하려면 아래의 명령어를 쳐보면 된다.
+
+```bash
+docker buildx inpsect
+```
+
+```
+Name:   multi-arch-builder
+Driver: docker-container
+
+Nodes:
+Name:      multi-arch-builder0
+Endpoint:  unix:///var/run/docker.sock
+Status:    running
+Platforms: linux/arm64*, linux/amd64*, linux/386, ...
+```
+
+그리고 기존 도커 이미지 빌드 명령어 대신 `docker buildx build -t [docker_image_tag] -f [dockerfile_name] --platform [fixed_platforms] --push .` 명령어로 빌드 및 푸시를 하면 멀티 아키텍처 이미지가 만들어진다.
+
+```bash
+docker buildx build -t tmdgh0221/hello-log-env -f ./Dockerfile --platform linux/arm64,linux/amd64 --push .
+```
+
 ## Versioning
 
 보통 Docker Image는 여러 개의 Tag를 통해 Version 관리 등을 하기 때문에, 생성한 Docker Image의 Tag를 명시해두는 편이 좋다.
@@ -382,7 +431,7 @@ kubectl config set current-context docker-desktop
 
 ### 배포
 
-쿠버네티스를 이용해 배포하기 위해서는 `deployment.yaml`라는 환경 구성을 위한 설정 파일이 필요하다. 해당 파일을 통해 어떤 설정과 환경으로 도커 이미지를 실행시켜 구동할 것인지 정할 수 있다.
+쿠버네티스를 이용해 배포하기 위해서는 `deployment.yaml`와 같은 환경 구성을 위한 설정 파일이 필요하다. 해당 파일을 통해 어떤 설정과 환경으로 도커 이미지를 실행시켜 구동할 것인지 정할 수 있다.
 
 ```yaml
 apiVersion: apps/v1
@@ -403,21 +452,28 @@ spec:
       labels:
         app: hello-log-env
     spec:
+      restartPolicy: Always
       containers:
         - image: tmdgh0221/hello-log-env:latest
           name: hello-log-env
+          imagePullPolicy: Always
           ports:
-            - containerPort: 4040
-              protocol: TCP
-          resources: {}
-      restartPolicy: Always
-status: {}
+            - name: http
+              containerPort: 4040
+          resources:
+            request:
+              cpu: 1000m
+              memory: 128Mi
+            limit:
+              cpu: 1000m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: hello-log-env
 spec:
+  type: LoadBalancer
   ports:
     - name: hello-log-env
       port: 4040
@@ -425,7 +481,6 @@ spec:
       protocol: TCP
   selector:
     app: hello-log-env
-  type: LoadBalancer
 status:
   loadBalancer: {}
 ```
@@ -442,7 +497,7 @@ kubectl create -f deployment.yaml
 잘 되었는 지 확인하려면 아래의 명령어들로 알아볼 수 있다.
 
 ```bash
-kubectl get all	# 배포된 pod, service, 그리고 deployment 목록을 확인할 수 있다.
+kubectl get all -o wide	# 배포된 pod, service, 그리고 deployment 목록을 확인할 수 있다.
 kubectl get events --sort-by=.metadata.creationTimestamp -A	# 배포 중 발생한 이벤트를 시간 순으로 보여준다.
 ```
 
@@ -480,22 +535,43 @@ spec:
       labels:
         app: hello-log-env
     spec:
+      restartPolicy: Always
       containers:
         - image: tmdgh0221/hello-log-env:latest
           name: hello-log-env
           imagePullPolicy: Always
           ports:
-            - containerPort: 4040
-              protocol: TCP
+            - name: http
+              containerPort: 4040
+          resources:
+            request:
+              cpu: 1000m
+              memory: 128Mi
+            limit:
+              cpu: 1000m
+              memory: 128Mi
           env:
             - name: LANGUAGE
               valueFrom:
                 configMapKeyRef:
                   name: hello-config-map
                   key: language
-          resources: {}
-      restartPolicy: Always
-status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-log-env
+spec:
+  type: LoadBalancer
+  ports:
+    - name: hello-log-env
+      port: 4040
+      targetPort: 4040
+      protocol: TCP
+  selector:
+    app: hello-log-env
+status:
+  loadBalancer: {}
 ```
 
 이후에는 마찬가지로 `kubectl create -f deployment.yaml` 명령어로 배포하고 잘 동작하는 지 확인해보면 된다.
@@ -534,27 +610,46 @@ spec:
       labels:
         app: hello-log-env
     spec:
+      restartPolicy: Always
       containers:
         - image: tmdgh0221/hello-log-env:latest
           name: hello-log-env
           imagePullPolicy: Always
           ports:
-            - containerPort: 4040
-              protocol: TCP
+            - name: http
+              containerPort: 4040
+          resources:
+            request:
+              cpu: 1000m
+              memory: 128Mi
+            limit:
+              cpu: 1000m
+              memory: 128Mi
           env:
             - name: LANGUAGE
               valueFrom:
                 configMapKeyRef:
                   name: hello-config-map
                   key: language
-            - name: FUNCTION
-              valueFrom:
-                secretKeyRef:
-                  name: hello-secret
-                  key: function
-          resources: {}
-      restartPolicy: Always
-status: {}
+          envFrom:
+            - secretRef:
+                name: hello-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-log-env
+spec:
+  type: LoadBalancer
+  ports:
+    - name: hello-log-env
+      port: 4040
+      targetPort: 4040
+      protocol: TCP
+  selector:
+    app: hello-log-env
+status:
+  loadBalancer: {}
 ```
 
 base64 인코딩된 값은 아래의 명령어로 쉽게 구할 수 있다.
@@ -564,6 +659,166 @@ echo -n java | base64
 ```
 
 이후에는 마찬가지로 `kubectl create -f deployment.yaml` 명령어로 배포하고 잘 동작하는 지 확인해보면 된다.
+
+### 영구 스토리지
+
+만약 서비스를 배포 후 해당 서비스가 동작 중에 종료되었을 때 중요한 정보들이 날라가지 않고 남아있어야 한다면, **PersistentVolume** 설정을 해야 한다. 대표적인 사용 예로 DB 컨테이너에 Volume 마운트를 영구 스토로지로 하여, 컨테이너를 재시작하더라도 데이터가 보존되도록 한다.
+
+영구 스토로지를 위해서는 **StorageClass**, **PersistentVolume (PV)**, **PersistentVolumeClaim (PVC)** 세 가지 환경 설정을 해야 한다. PV에서 지정한 경로에 PVC에서 요청한 리소스만큼 할당되어 데이터가 저장된다. 물론 이를 사용하기 위해 배포 설정 파일도 수정해주어야 한다.
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: hello-log-local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-data-pv
+  labels:
+    type: local
+spec:
+  storageClassName: hello-log-local-storage
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /Users/joon/tmp/postgresql/data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data-pvc
+spec:
+  storageClassName: hello-log-local-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+```
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: hello-log-env
+  name: hello-log-env
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-log-env
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: hello-log-env
+    spec:
+      restartPolicy: Always
+      containers:
+        - image: tmdgh0221/hello-log-env:latest
+          name: hello-log-env
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 4040
+          resources:
+            request:
+              cpu: 1000m
+              memory: 128Mi
+            limit:
+              cpu: 1000m
+              memory: 128Mi
+          env:
+            - name: LANGUAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: hello-config-map
+                  key: language
+          envFrom:
+            - secretRef:
+                name: hello-secret
+        - image: postgres:14.2
+          name: hello-log-postgres
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: hello-secret
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-log-env
+spec:
+  type: LoadBalancer
+  ports:
+    - name: hello-log-env
+      port: 4040
+      targetPort: 4040
+      protocol: TCP
+  selector:
+    app: hello-log-env
+status:
+  loadBalancer: {}
+```
+
+### Ingress
+
+이전 배포한 환경 설정을 살펴보면, `Service`에서 LoadBalancer 타입의 서비스를 배포했다. 이 서비스로 인해 쿠버네티스 클러스터 내에서만 노출된 포트가 외부에서도 접근가능하게 된다. 이 대신에 Ingress와  IngressController를 이용하여 라우팅을 할 수 있다.
+
+IngressController로는 Nginx를 사용한다. [Install Guide](https://kubernetes.github.io/ingress-nginx/deploy/#quick-start)에서 관련 설정 yaml 파일의 경로를 알 수 있다. 가이드를 따라서 쿠버네티스에 설치하자.
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.2.0/deploy/static/provider/cloud/deploy.yaml
+```
+
+그리고 Ingress를 설정해주어야 한다. 다만 이렇게 Ingress를 사용할 경우, 앞서 설정한 Service yaml 파일에서 `type`을  `LoadBalancer`에서 기본값인 `ClusterIP`로 바꿔주는 것이 좋다. 그리고 Ingress에 대한 설정  yaml 파일은 아래와 같다.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  annotations:
+    ingress.kubernetes.io/proxy-body-size: "0"
+    ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.org/client-max-body-size: "0"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hello-log-env
+                port:
+                  number: 4040
+```
+
+이로써 기본적인 도커 이미지 빌드와 쿠버네티스에 배포하는 과정을 살펴보았다.
 
 ## Reference
 
