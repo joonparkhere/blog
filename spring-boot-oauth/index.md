@@ -1,15 +1,3 @@
----
-title: "스프링 시큐리티 와 OAuth2 와 JWT 의 콜라보"
-summary: Spring Boot, Spring Security, OAuth 2.0, JWT 와의 치열한 싸움 기록
-date: 2021-04-27
-pin: false
-image: images/spring-security.png
-tags:
-- Spring
-- OAuth 2.0
-- JWT
----
-
 # Spring Security 와 OAuth 2.0 와 JWT 의 콜라보
 
 스프링 부트를 토대로, 스프링 시큐리티의 Filter Chain과 OAuth 2.0 로그인 연동을 JWT 토큰 기반으로 구현했던 기록.

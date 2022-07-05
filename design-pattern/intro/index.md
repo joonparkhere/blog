@@ -1,14 +1,3 @@
----
-title: "[디자인 패턴 GURU] Intro"
-summary: Refactoring Guru 서적을 기반으로한 디자인 패턴 학습 Intno
-date: 2021-12-30
-pin: false
-image: images/index-design-patterns.png
-tags:
-- Software Enginerring
-- Design Pattern
----
-
 ## 디자인 패턴 감 잡기
 
 **디자인 패턴**은 소프트웨어 설계 중 발생하는 자주 발생하는 문제를 풀어내기 위한 해결방법이다. 이는 어떠한 명확한 코드가 아니라, 특정 문제를 해결하기 위한 General Concept이다. 알고리즘은 항상 어떠한 목표를 달성할 수 있는 일련의 과정들을 명확히 정의한다면, 디자인 패턴은 어떠한 해결방법에 대한 추상적인 묘사의 방법이다. 때문에 동일한 패턴을 적용한 두 프로그램의 구현 코드는 서로 다를 수 있다. 비유를 하자면 알고리즘은 요리 레시피, 디자인 패턴은 청사진이라고 할 수 있다.
