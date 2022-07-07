@@ -1,3 +1,12 @@
+---
+title: "Go언어에서의 에러 핸들링"
+date: 2022-02-22
+pin: false
+tags:
+- Go
+- Code Style
+---
+
 # Go언어 에러 핸들링
 
 이 글은 [Dave Cheney Blog](https://dave.cheney.net/2016/04/27/dont-just-check-errors-handle-them-gracefully) 글을 토대로 구글링 한 것들을 종합한 내용이다. 타 언어와 달리 Exception이 없는 구조의 Go언어에서 에러를 핸들링하는 방법을 알아보고자 한다.

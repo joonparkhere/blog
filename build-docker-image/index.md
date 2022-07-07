@@ -1,3 +1,12 @@
+---
+title: "도커 이미지 빌드와 쿠버네티스 배포"
+date: 2022-06-22
+pin: false
+tags:
+- Docker
+- Kubernetes
+---
+
 ## Sample Application
 
 도커 이미지로 배포해 볼 예제 Go언어 서버는 아래와 같다.

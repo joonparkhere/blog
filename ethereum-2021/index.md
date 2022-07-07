@@ -1,3 +1,12 @@
+---
+title: 2021년 한 해 동안의 이더리움
+date: 2022-06-20
+pin: false
+tags:
+- Blockchain
+- Ethereum
+---
+
 # 2021년 한 해동안의 이더리움
 
 이 글은 [The Year in Ethereum 2021](https://stark.mirror.xyz/q3OnsK7mvfGtTQ72nfoxLyEV5lfYOqUfJIoKBx7BG1I)을 토대로 작성한 글임을 알린다.

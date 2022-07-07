@@ -1,3 +1,13 @@
+---
+title: 이더리움 1.0 Geth Consensus 코드 리뷰
+date: 2022-06-21
+pin: false
+tags:
+- Blockchain
+- Ethereum
+- Go
+---
+
 > 본 포스팅에서 사용되는 각종 자료와 코드들은 이해를 돕기 위해 간략화 된 데이터임을 미리 밝힌다.
 
 ## 이더리움 클라이언트
