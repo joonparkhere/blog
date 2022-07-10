@@ -1,6 +1,6 @@
 ---
 title: 이더리움 1.0 Geth Consensus 코드 리뷰
-date: 2022-07-10
+date: 2022-07-08
 pin: false
 tags:
 - Blockchain
