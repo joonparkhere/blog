@@ -1,6 +1,6 @@
 ---
 title: 이더리움 1.0 Geth Consensus 코드 리뷰
-date: 2022-06-21
+date: 2022-07-10
 pin: false
 tags:
 - Blockchain
@@ -9,46 +9,6 @@ tags:
 ---
 
 > 본 포스팅에서 사용되는 각종 자료와 코드들은 이해를 돕기 위해 간략화 된 데이터임을 미리 밝힌다.
-
-## 이더리움 클라이언트
-
-2020.12.01 The Beacon Chain 업데이트 후, 이더리움은 Consensus Client와 Execution Client로 나뉜다. 하지만 아직 Beacon Chain의 실질적인 사용이 안되고 있으므로, 이전과 동일하게 Execution Client가 대부분의 역할을 도맡는다.
-
-2022.06 기준 Execution Client 현황은 아래와 같다. 출처는 [ethernodes](https://ethernodes.org/)이다.
-
-![](./images/execution-client-diversity.png)
-
-### 1. [Geth](https://github.com/ethereum/go-ethereum)
-
-- 이더리움 프로토콜의 Original 구현체 Go, C++, Python 중 하나
-- Go언어로 구현되어 있으며, 가장 많이 사용되는 클라이언트
-
-### 2. [Erigon](https://github.com/ledgerwatch/erigon)
-
-- Turbo-Geth를 지향하는, Geth의 Fork된 것으로 Go언어 구현체
-- 구현 언어를 Go에서 다른 언어로 사용될 예정
-
-### 3. [Openethereum](https://github.com/openethereum/openethereum)
-
-- Rust로 구현된 이더리움 클라이언트
-- 깃허브에 들어가면 알 수 있듯이 Deprecated 상태이므로, 향후 사용될 일이 거의 없을 듯
-
-### 4. [Nethermind](https://github.com/NethermindEth/nethermind)
-
-- C#로 구현된 이더리움 클라이언트
-
-### 5. [Besu](https://github.com/hyperledger/besu)
-
-- Java로 구현된 이더리움 클라이언트
-- Hyperledger에서 담당하는 프로젝트, Enterprise를 위한 Commercial 기능 존재
-
-## Geth Intro
-
-이더리움 프로토콜의 보다 깊은 이해를 위해, 구현체의 코드를 살펴보며 어떻게 동작하는 지 알아볼 생각이다. Geth가 구현 클라이언트 중 가장 많이 사용되는 이유가 있을 거라고 생각하기 때문에 Geth를 토대로 살펴볼 것이다.
-
-직접 Geth를 동작 시켜놓고 돌아가는 흐름을 파악하고도 싶었지만, 이더리움 노드를 구동하기 위해서는 4 Core CPU, 16GB RAM, 최소 1TB, 권장 2TB 용량이 필요하다길래.. 현재로서는 생각을 접었다.
-
-Geth Github을 보면 상당히 많은 Sub-Repository들이 있다. 각각이 하나의 기능을 도맡는데, 이들 중에서도 주요한 것들을 위주로 살펴볼 생각이다. (e.g., `consensus`, `p2p` etc) [공식 Github](https://github.com/ethereum/go-ethereum)과 더불어 [Sigmoid님 Korean Geth](https://github.com/NAKsir-melody/go-ethereum-korean)도 같이 참고하였다.
 
 ## Consensus
 
@@ -81,10 +41,9 @@ Consensus Package에는 여러 종류의 이더리움 합의 엔진에 대한 �
 
 - Ethash
 
-  Ethash는 현재 이더리움 메인넷에서 사용 중인 PoW (Proof-of-Work) 합의 알고리즘이다. 비트코인의 그것과 유사하지만, Ethash는 특정 회로를 가진 반도체에 유리하게 동작하지 않도록, 즉 ASIC 저항성을 갖게 하여 전문 GPU 채굴 장비를 견제한다. 이는 가능한 채굴자들이 참여할 수 있는 장벽을 낮추고, 채굴 풀을 확장시켜 탈중앙시키기 위함이다. (비트코인 Mining Power의 경우 대략 1년 전만 하더라도 51% 이상이 중국이었다. - 중국 정부가 채굴을 금지시키기 이전)
+  Ethash는 현재 이더리움 메인넷에서 사용 중인 PoW (Proof-of-Work) 합의 알고리즘이다. 비트코인의 그것과 유사하지만, Ethash는 특정 회로를 가진 반도체에 유리하게 동작하지 않도록, 즉 ASIC 저항성을 갖게 하여 전문 GPU 채굴 장비를 견제한다. 이는 가능한 채굴자들이 참여할 수 있는 장벽을 낮추고, 채굴 풀을 확장시켜 탈중앙시키기 위함이다. (비트코인 Mining Power의 경우 대략 1년 전만 하더라도 51% 이상이 중국이었다. - 중국 정부가 채굴을 금지시키기 이전 시점)
 
-
-### Ethash
+## [Ethash](https://ethereum.org/en/developers/docs/consensus-mechanisms/pow/mining-algorithms/ethash)
 
 `Ethash` 객체는 `Engine` 인터페이스를 구현한다. 구현체를 살펴보기에 앞서서, 어떤 메서드들을 구현하는지 인터페이스를 알아보려 한다.
 
@@ -164,7 +123,38 @@ type Engine interface {
 3. 이 Cache Data를 통해 Data Set 생성
 4. 이 Data Set 일부를 해싱할 때 사용하여 Mining 수행
 
+### Parmeters
+
 그럼 Mining하기 위해 필요한 Data Set을 생성해야 한다. 그러기 위해서는 먼저 Seed Hash Value, Cache Size, Data Set Size을 구해야 한다.
+
+> 지금부터 나오는 코드는 각각 파이썬과 Go언어이다. 파이썬은 Pseudo Code 느낌으로 참고하면 될 것 같고, Go언어는 실제  Geth에 있는 코드 일부를 발췌해온 것이다.
+
+```python
+DATASET_BYTES_INIT = 2**30        # bytes in dataset at genesis
+DATASET_BYTES_GROWTH = 2**23      # dataset growth per epoch
+
+CACHE_BYTES_INIT = 2**24          # bytes in cache at genesis
+CACHE_BYTES_GROWTH = 2**17        # cache growth per epoch
+
+EPOCH_LENGTH = 30000              # blocks per epoch
+
+MIX_BYTES = 128                   # width of mix
+HASH_BYTES = 64                   # hash length in bytes
+
+def get_cache_size(block_number):
+    sz = CACHE_BYTES_INIT + CACHE_BYTES_GROWTH * (block_number // EPOCH_LENGTH)
+    sz -= HASH_BYTES
+    while not isprime(sz / HASH_BYTES):
+        sz -= 2 * HASH_BYTES
+    return sz
+
+def get_full_size(block_number):
+    sz = DATASET_BYTES_INIT + DATASET_BYTES_GROWTH * (block_number // EPOCH_LENGTH)
+    sz -= MIX_BYTES
+    while not isprime(sz / MIX_BYTES):
+        sz -= 2 * MIX_BYTES
+    return sz
+```
 
 ```go
 const (
@@ -233,19 +223,20 @@ func calcDatasetSize(epoch int) uint64 {
 }
 ```
 
-> Cache Size와 Data Set Size의 값은 각각 Linear하게 증가하는데, 채굴하는 Block Number에 따라 설정된 Linearly Growing Threshold 값보다 작은 Highest Prime 수를 Size로 사용한다.
+Cache Size와 Data Set Size의 값은 각각 Linear하게 증가하는데, 채굴하는 Block Number에 따라 설정된 Linearly Growing Threshold 값보다 작은 Highest Prime 수를 Size로 사용한다.
 
-> 채굴하려는 Block Number가 5,660,000 일 때의 Cacahe Size를 구해보자.
->
-> 1. Epoch
->    Block_Number / Epoch_Length(30000) = 188
-> 2. Size Threshold
->    Cache_Init_Bytes(1 << 24) + Cache_Growth_Bytes(1 << 17) * Epoch(188) - Hash_Bytes(64) = 41,418,688
-> 3. Size / Hash_Bytes == Prime Number 될 때까지
->    2 * Hash_Bytes 값만큼  Size를 감소시키며 반복
-> 4. Final Size = 41,286,208 (39.37 MB)
->
-> 비슷한 과정으로 Data Set Size도 구해보면 2,642,407,552 (2.46GB) 이다.
+채굴하려는 Block Number가 5,660,000 일 때의 Cacahe Size를 구해보자.
+
+1. Epoch
+    Block_Number / Epoch_Length(30000) = 188
+2. Size Threshold
+   Cache_Init_Bytes(1 << 24) + Cache_Growth_Bytes(1 << 17) * Epoch(188) - Hash_Bytes(64) = 41,418,688
+3. Size / Hash_Bytes == Prime Number 될 때까지 2 * Hash_Bytes 값만큼  Size를 감소시키며 반복
+4. Final Size = 41,286,208 (39.37 MB)
+
+비슷한 과정으로 Data Set Size도 구해보면 2,642,407,552 (2.46GB) 이다.
+
+### Cache Generation
 
 다음으로는 위에서 구한 Cache Size만큼의 Cache Data를 생성한다. 여기서  [Strict Memory Hard Hashing Functions (2014)](http://www.hashcash.org/papers/memohash.pdf) 알고리즘, 그 중에서도 RandMemoHash를 사용한다.
 
@@ -268,6 +259,27 @@ RandMemoHash(s, R, N)
 ```
 
 실제 구현 코드는 아래와 같다.
+
+```python
+HASH_BYTES = 64                   # hash length in bytes
+CACHE_ROUNDS = 3                  # number of rounds in cache production
+
+def mkcache(cache_size, seed):
+    n = cache_size // HASH_BYTES
+
+    # Sequentially produce the initial dataset
+    o = [sha3_512(seed)]
+    for i in range(1, n):
+        o.append(sha3_512(o[-1]))
+
+    # Use a low-round version of randmemohash
+    for _ in range(CACHE_ROUNDS):
+        for i in range(n):
+            v = o[i][0] % n
+            o[i] = sha3_512(map(xor, o[(i-1+n) % n], o[v]))
+
+    return o
+```
 
 ```go
 const (
@@ -319,22 +331,49 @@ func generateCache(dest []uint32, epoch uint64, seed []byte) {
 }
 ```
 
-> 위에서 계산한 Cache Size 41,286,208 (39.37 MB) 로 대략적인 흐름을 파악해보면,
->
-> 1. rows
->    size / Hash_Bytes(64) = 645,097
->
-> 2. 29행에서 Cache의 첫 부분을 64바이트의 해시값으로 세팅
->
-> 3. 30~32행에서 1~(rows-1) 횟수만큼 Cache의 마지막 요소로 Append, 이 과정을 마치면 Cache Size가 39.37MB로 채워짐
->
-> 4. 37~47행에서 RandMemoHash 알고리즘을 사용, 계산 수행에 필요한 메모리 크기에 비해, 계산에 사용할 수 있는 메모리 크기를 줄이면, 연산 속도가 기하급수적으로 증가하도록 구성
->
->    이 방법을 사용하게 되면 데이터를 생성할 때 일정량 이상의 메모리를 사용하지 않으면, 소모되는 시간이 아래 그래프처럼 기하급수적으로 증가한다. 이는 연산 비교 횟수가 급격하게 증가하게 되고, 메모리가 부족하면 디스크에 저장해야 하는데, 메모리보다 Storage에 Store & Load 하는 소요 시간이 오래 걸리기 때문이다.
->
->    ![](./images/rand-memo-hash-graph.png)
+위에서 계산한 Cache Size 41,286,208 (39.37 MB) 로 대략적인 흐름을 파악해보면,
 
-이제 이 Cache Data를 이용해서 DAG (Directed Acyclic Graph) 파일을 만든다. 한번에 큰 파일이 만들어지는 것이 아니라 Cache Data를 이용해 한번에 64bytes 데이터를 만들어 내고, 이를 앞에서 구한 Data Set Size만큼 생성하도록 반복하는 과정을 거친다. 
+1. rows
+    size / Hash_Bytes(64) = 645,097
+
+2. 29행에서 Cache의 첫 부분을 64바이트의 해시값으로 세팅
+
+3. 30~32행에서 1~(rows-1) 횟수만큼 Cache의 마지막 요소로 Append, 이 과정을 마치면 Cache Size가 39.37MB로 채워짐
+
+4. 37~47행에서 RandMemoHash 알고리즘을 사용, 계산 수행에 필요한 메모리 크기에 비해, 계산에 사용할 수 있는 메모리 크기를 줄이면, 연산 속도가 기하급수적으로 증가하도록 구성
+   
+   이 방법을 사용하게 되면 데이터를 생성할 때 일정량 이상의 메모리를 사용하지 않으면, 소모되는 시간이 아래 그래프처럼 기하급수적으로 증가한다. 이는 연산 비교 횟수가 급격하게 증가하게 되고, 메모리가 부족하면 디스크에 저장해야 하는데, 메모리보다 Storage에 Store & Load 하는 소요 시간이 오래 걸리기 때문이다.
+   
+   ![](./images/rand-memo-hash-graph.png)
+
+### Full Dataset Calculation
+
+이제 이 Cache Data를 이용해서 DAG (Directed Acyclic Graph) 파일을 만든다. 한번에 큰 파일이 만들어지는 것이 아니라 Cache Data를 이용해 한번에 64bytes 데이터를 만들어 내고, 이를 앞에서 구한 Data Set Size만큼 생성하도록 반복하는 과정을 거친다.
+
+```python
+HASH_BYTES = 64                   # hash length in bytes
+WORD_BYTES = 4                    # bytes in word
+DATASET_PARENTS = 256             # number of parents of each dataset element
+
+FNV_PRIME = 0x01000193
+
+def fnv(v1, v2):
+    return ((v1 * FNV_PRIME) ^ v2) % 2**32
+
+def calc_dataset_item(cache, i):
+    n = len(cache)
+    r = HASH_BYTES // WORD_BYTES
+    # initialize the mix
+    mix = copy.copy(cache[i % n])
+    mix[0] ^= i
+    mix = sha3_512(mix)
+    # fnv it with a lot of random cache nodes based on i
+    for j in range(DATASET_PARENTS):
+        cache_index = fnv(i ^ j, mix[j % r])
+        mix = map(fnv, mix, cache[cache_index % n])
+    return sha3_512(mix)
+
+```
 
 ```go
 const (
@@ -394,27 +433,34 @@ func fnvHash(mix []uint32, data []uint32) {
 }
 ```
 
-> 1. 26행까지는 파라미터로 전달받은 Index에 맞춰 초기 Data Set Item을 세팅한다.
-> 2. Data_Set_Parents 수 만큼 반복하면서 30행에서 FNV라는 함수로 Cache Data에 대한 Index를 Pseudo-Random하게 만든다.
-> 3. 31행에서는 위에서 구한 Index를 이용해 FNV_Hash라는 함수로 Data Set Item을 만들어낸다.
-> 4. 35~39행에서 위에서 구한 Data Set Item을  KECCAK-512로 해싱하여 64bytes 데이터를 반환한다.
->
-> 위에서 사용된 [FNV(Fowler-Noll-Vo)](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV-1a_hash) 함수는 간단하고 결과가 상대적으로 빠르게 생성되어 비암호화 해시라고 불린다. 두 개의 파라미터를 결합해 빠르게 해시를 생성하는 과정이라고 생각하면 될 것 같다.
->
-> ```pseudocode
-> FNV-1a:
-> (1) hash := FNV_offset_basis
-> (2) for byte_of_data to be hashed do
-> 	(i) hash := hash * FNV_prime
->    (ii) hash := hash XOR byte_of_data
-> (3) return hash
-> ```
->
-> - FNV_offset_basis는  `fav(a, b)` 함수에서 첫번째 파라미터를 의미
-> - FNV_prime은 32bits의 경우 0x01000193 (16,777,619) 를 의미
-> - byte_of_data는 함수의 두번째 파라미터를 의미
+1. 26행까지는 파라미터로 전달받은 Index에 맞춰 초기 Data Set Item을 세팅한다.
+
+2. Data_Set_Parents 수 만큼 반복하면서 30행에서 FNV라는 함수로 Cache Data에 대한 Index를 Pseudo-Random하게 만든다.
+
+3. 31행에서는 위에서 구한 Index를 이용해 FNV_Hash라는 함수로 Data Set Item을 만들어낸다.
+
+4. 35~39행에서 위에서 구한 Data Set Item을  KECCAK-512로 해싱하여 64bytes 데이터를 반환한다.
+    위에서 사용된 [FNV(Fowler-Noll-Vo)](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV-1a_hash) 함수는 간단하고 결과가 상대적으로 빠르게 생성되어 비암호화 해시라고 불린다. 두 개의 파라미터를 결합해 빠르게 해시를 생성하는 과정이라고 생각하면 될 것 같다.
+
+  ```
+  FNV-1a:
+  (1) hash := FNV_offset_basis
+  (2) for byte_of_data to be hashed do
+  	(i) hash := hash * FNV_prime
+     (ii) hash := hash XOR byte_of_data
+  (3) return hash
+  ```
+
+  - FNV_offset_basis는  `fav(a, b)` 함수에서 첫번째 파라미터를 의미
+  - FNV_prime은 32bits의 경우 0x01000193 (16,777,619) 를 의미
+  - byte_of_data는 함수의 두번째 파라미터를 의미
 
 이제 Data Set Item을 이용해 전체 Data Set을 생성한다.
+
+```python
+def calc_dataset(full_size, cache):
+    return [calc_dataset_item(cache, i) for i in range(full_size // HASH_BYTES)]
+```
 
 ```go
 // generateDataset generates the entire ethash dataset for mining.
@@ -464,9 +510,22 @@ func generateDataset(dest []uint32, epoch uint64, cache []uint32) {
 }
 ```
 
-> 병렬 처리를 위해 복잡하게 표현되어 있지만, 20~41행까지는 결국 Data_Set_Size / Hash_Bytes 만큼 Data Set Item 생성을 반복하는 것이다. 위에서 사용한 예시로 계산을 해보면, Data_Set_Size (2,642,407,552) / Hash_Bytes (64) = 41,287,619 만큼 반복한다. 즉  64bytes X 41,287,619, 약 2.46GB 크기의 DAG (Directed Acyclic Graph) 를 생성한다.
+병렬 처리를 위해 복잡하게 표현되어 있지만, 20~41행까지는 결국 Data_Set_Size / Hash_Bytes 만큼 Data Set Item 생성을 반복하는 것이다. 위에서 사용한 예시로 계산을 해보면, Data_Set_Size (2,642,407,552) / Hash_Bytes (64) = 41,287,619 만큼 반복한다. 즉  64bytes X 41,287,619, 약 2.46GB 크기의 DAG (Directed Acyclic Graph) 를 생성한다.
+
+### Mining
 
 다음으로 Mining하는 과정을 살펴보자.
+
+```python
+def mine(full_size, dataset, header, difficulty):
+    # zero-pad target to compare with hash on the same digit
+    target = zpad(encode_int(2**256 // difficulty), 64)[::-1]
+    from random import randint
+    nonce = randint(0, 2**64)
+    while hashimoto_full(full_size, dataset, header, nonce) > target:
+        nonce = (nonce + 1) % 2**64
+    return nonce
+```
 
 ```go
 // mine is the actual proof-of-work miner that searches for a nonce starting from
@@ -525,10 +584,44 @@ search:
 }
 ```
 
-> - 전달받은 파라미터를 토대로 Block Header, Header Hash Value, PoW Target Value, Data Set 등을 추출해낸다.
-> - 31~32행에서 찾고자 하는 Target Value 보다 작은 값이 나올 때까지 Nonce 값을 하나씩 증가시키며 `hashimotoFull` 함수를 호출한다.
+- 전달받은 파라미터를 토대로 Block Header, Header Hash Value, PoW Target Value, Data Set 등을 추출해낸다.
+- 31~32행에서 찾고자 하는 Target Value 보다 작은 값이 나올 때까지 Nonce 값을 하나씩 증가시키며 `hashimotoFull` 함수를 호출한다.
 
 여기까지만 보면 일반적인  PoW처럼 Target Value보다 작은 Nonce를 찾는 것처럼 보인다. 호출되는 `hashimotFull` 함수를 보면 왜 Ethash는 일반적인 Pow와 다른지 알 수 있다.
+
+```python
+MIX_BYTES = 128                   # width of mix
+ACCESSES = 64                     # number of accesses in hashimoto loop
+
+def hashimoto_full(full_size, dataset, header, nonce):
+    return hashimoto(header, nonce, full_size, lambda x: dataset[x])
+
+def hashimoto(header, nonce, full_size, dataset_lookup):
+    n = full_size / HASH_BYTES
+    w = MIX_BYTES // WORD_BYTES
+    mixhashes = MIX_BYTES / HASH_BYTES
+    # combine header+nonce into a 64 byte seed
+    s = sha3_512(header + nonce[::-1])
+    # start the mix with replicated s
+    mix = []
+    for _ in range(MIX_BYTES / HASH_BYTES):
+        mix.extend(s)
+    # mix in random dataset nodes
+    for i in range(ACCESSES):
+        p = fnv(i ^ s[0], mix[i % w]) % (n // mixhashes) * mixhashes
+        newdata = []
+        for j in range(MIX_BYTES / HASH_BYTES):
+            newdata.extend(dataset_lookup(p + j))
+        mix = map(fnv, mix, newdata)
+    # compress mix
+    cmix = []
+    for i in range(0, len(mix), 4):
+        cmix.append(fnv(fnv(fnv(mix[i], mix[i+1]), mix[i+2]), mix[i+3]))
+    return {
+        "mix digest": serialize_hash(cmix),
+        "result": serialize_hash(sha3_256(s+cmix))
+    }
+```
 
 ```go
 const (
@@ -591,14 +684,13 @@ func hashimoto(hash []byte, nonce uint64, size uint64, lookup func(index uint32)
 }
 ```
 
-> ![](./images/ethash-dagger-hashimoto.png)
->
-> 1. 35행까지의 과정으로, 전처리된 Header와 Nonce를 해싱하고, 그 값을 토대로 초기 Mix를 세팅한다.
-> 2. 40~43행까지의 과정으로, 전체 DAG Data Set에서 128bytes (연속된 두 개의  DAG Page) 크기의 랜덤한 페이지를 불러온다. 이때 `lookup`함수가 사용된다.
-> 3. 44행의 과정으로, Mix와 불러온 DAG Page를 FNV_Hash를 이용해 결합한다.
-> 4. 위 과정을 Loop_Accesses(64) 만큼 반복한다.
-> 5. 48~51행까지의 과정으로, Compress하여 32bits 결과를 생성한다.
-> 6. 32bits Mix Digest 값과 Target 값을 비교하여, Target 값보다 크면 Fail로 판단하고 Nonce를 증가시켜 위의 과정을 반복한다.
+![](./images/ethash-dagger-hashimoto.png)
+1. 35행까지의 과정으로, 전처리된 Header와 Nonce를 해싱하고, 그 값을 토대로 초기 Mix를 세팅한다.
+2. 40~43행까지의 과정으로, 전체 DAG Data Set에서 128bytes (연속된 두 개의  DAG Page) 크기의 랜덤한 페이지를 불러온다. 이때 `lookup`함수가 사용된다.
+3. 44행의 과정으로, Mix와 불러온 DAG Page를 FNV_Hash를 이용해 결합한다.
+4. 위 과정을 Loop_Accesses(64) 만큼 반복한다.
+5. 48~51행까지의 과정으로, Compress하여 32bits 결과를 생성한다.
+6. 32bits Mix Digest 값과 Target 값을 비교하여, Target 값보다 크면 Fail로 판단하고 Nonce를 증가시켜 위의 과정을 반복한다.
 
 컴퓨터에서는 캐시를 이용하여 반복되는 연산의 속도를 빠르게 할 수 있다. 마이닝 과정에서 128bytes 크기의 DAG Data Set 페이지을 읽어오는 과정을 보면, 페이지를 불러올 때 Mix 과정을 통해, 다음에 불러올 페이지를 예측할 수 없게 설계되어 있다. 만약 DAG 용량이 작았다면 다음 페이지 예측이 불가능하더라도 데이터 전체를 캐시에 넣어 사용할 수 있겠지만, 캐싱 용량은 8KB~32MB 정도로 굉장히 작기 때문에 수 GB 짜리의 DAG를 저장하는 것은 불가능하다. 그렇다고 해서 DAG 중 일부를 캐시에 저장하더라도 Cache Miss 확률이 매우 높기 때문에 무의미하다. 이러한 점 때문에  Ethash 알고리즘은 Memory Hard (Memory Bound) 라고 불리며, 단순 해싱 반복  PoW 구조와 달리  ASIC 저항성을 갖추게 된다.
 
@@ -659,52 +751,10 @@ func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block
 }
 ```
 
-> - 가용한 Thread 수 만큼 `ethash.mine(id, nonce)`을 Async Call, 파라미터 중 Nonce값으로써 Int63 랜덤 Value가 전달
-> - 이후 Mining 결과 값 또한 Async Call한 함수에서 받아서 전달
+- 가용한 Thread 수 만큼 `ethash.mine(id, nonce)`을 Async Call, 파라미터 중 Nonce값으로써 Int63 랜덤 Value가 전달
+- 이후 Mining 결과 값 또한 Async Call한 함수에서 받아서 전달
 
 ## Reference
 
 - [bero님 Ethash 연구 포스팅](https://medium.com/tomak/%EC%9D%B4%EB%8D%94%EB%A6%AC%EC%9B%80-ethash-%EC%97%B0%EA%B5%AC-16677ed7da50)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
