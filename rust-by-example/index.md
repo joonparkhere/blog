@@ -1,5 +1,5 @@
 ---
-title: Hello Rust: By Example
+title: Hello Rust By Example
 date: 2022-07-19
 pin: false
 tags:
