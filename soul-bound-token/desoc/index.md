@@ -35,7 +35,7 @@ DeSoc에서 주요한 기능 중 하나가 세분화 가능한 네트워크 재�
 
 지금껏 잠재력 있고 유망한 기술들이 그러했듯이, DeSoc 개념 또한 정반대의 결과를 초래할 수 있다. 특정 SBT를 소유한 Soul 그룹을 자동적으로 금융 신뢰가 부족한 이들로 간주하여 금융 서비스를 보류하는 차별적 관행 (Red-Lining) 을 일삼거나, SBT를 통해 사회적 약자를 구분해내어 이들을 이용하여 대출을 실행하는 등 디스토피아적 성향의 일들도 발생할 수 있다.
 
-## Implantation Challenge
+## Implementation Challenge
 
 ### Private Souls
 

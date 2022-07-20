@@ -1,6 +1,6 @@
 ---
 title: Hello Rust By Example
-date: 2022-07-19
+date: 2022-07-20
 pin: false
 tags:
 - Rust
@@ -482,11 +482,346 @@ fn constants() {
 
 ## Variable Bindings
 
+```rust
+fn intro() {
+    let an_integer = 1u32;
+    let a_boolean = true;
+    let unit = ();
+
+    let copied_integer = an_integer;
+
+    println!("An integer: {:?}", copied_integer);
+    println!("A boolean: {:?}", a_boolean);
+    println!("Meet the unit value: {:?}", unit);
+    // An integer: 1
+    // A boolean: true
+    // Meet the unit value: ()
+}
+
+fn mutability() {
+    let immutable_binding = 1;
+    // immutable_binding += 1; // compiler throw error because immutable by default
+
+    let mut mutable_binding = 1;
+    println!("Before mutation: {}", mutable_binding);
+    mutable_binding += 1;
+    println!("After mutation: {}", mutable_binding);
+    // Before mutation: 1
+    // After mutation: 2
+}
+
+fn scope() {
+    let long_lived_binding = 1;
+
+    {
+        let short_lived_binding = 2;
+        println!("inner short: {}", short_lived_binding);
+        // inner short: 2
+    }
+
+    // println!("outer short: {}", short_lived_binding); // error! not exist in this scope
+
+    println!("outer long: {}", long_lived_binding);
+    // outer long: 1
+}
+
+fn shadowing() {
+    let shadowed_binding = 1;
+
+    {
+        println!("before being shadowed: {}", shadowed_binding);
+        // before being shadowed: 1
+
+        let shadowed_binding = "abc";
+        println!("shadowed in inner block: {}", shadowed_binding);
+        // shadowed in inner block: abc
+    }
+
+    println!("outside after block: {}", shadowed_binding);
+    // outside after block: 1
+
+    let shadowed_binding = 2;
+    println!("shadowed after block: {}", shadowed_binding);
+    // shadowed after block: 2
+}
+
+fn declare_first() {
+    let a_binding;
+    // println!("before a binding: {}", a_binding); // error! uninitialized variable
+
+    {
+        let x = 2;
+        a_binding = x * x;
+    }
+
+    println!("a binding: {}", a_binding);
+    // a binding: 4
+
+    let another_binding;
+    another_binding = 1;
+    println!("another binding: {}", another_binding);
+    // another binding: 1
+}
+
+fn freezing() {
+    let mut _mutable_integer = 7i32;
+
+    {
+        let _mutable_integer = _mutable_integer;
+        // _mutable_integer = 50; // error! frozen in this scope
+    }
+
+    _mutable_integer = 3;
+}
+```
+
 ## Types
+
+```rust
+#![allow(overflowing_literals)]
+
+fn casting() {
+    let decimal = 65.4321_f32;
+
+    // let integer: u8 = decimal; // error! no implicit conversion
+    let integer = decimal as u8;
+    let character = integer as char;
+    // let character = decimal as char; // error! cannot be directly converted
+
+    println!("Casting: {} -> {} -> {}", decimal, integer, character);
+    // Casting: 65.4321 -> 65 -> A
+
+    /*
+    when casting any value to an unsigned type, T,
+    T::MAX + 1 is added or subtracted until the value
+    fits into the new type
+     */
+
+    println!("1000 as a u8 is : {}", 1000 as u8); // 1000 - 256 - 256 - 256 = 232
+    // 1000 as a u8 is : 232
+
+    println!("  -1 as a u8 is : {}", (-1i8) as u8); // -1 + 256 = 255
+    //   -1 as a u8 is : 255
+
+
+    /*
+    When casting to a signed type, the (bitwise) result is the same as
+    first casting to the corresponding unsigned type. If the most significant
+    bit of that value is 1, then the value is negative.
+     */
+
+    println!(" 128 as a i8 is : {}", 128 as i8);
+    //  128 as a i8 is : -128
+
+    /*
+    Since Rust 1.45, the `as` keyword performs a *saturating cast*
+    when casting from float to int. If the floating point value exceeds
+    the upper bound or is less than the lower bound, the returned value
+    will be equal to the bound crossed.
+     */
+
+    println!("300.0 is {}", 300.0_f32 as u8);
+    println!("-100.0 as u8 is {}", -100.0_f32 as u8);
+    println!("nan as u8 is {}", f32::NAN as u8);
+    // 300.0 is 255
+    // -100.0 as u8 is 0
+    // nan as u8 is 0
+
+    /*
+    This behavior incurs a small runtime cost and can be avoided
+    with unsafe methods, however the results might overflow and
+    return **unsound values**. Use these methods wisely:
+     */
+    unsafe {
+        println!("300.0 is {}", 300.0_f32.to_int_unchecked::<u8>());
+        println!("-100.0 as u8 is {}", (-100.0_f32).to_int_unchecked::<u8>());
+        println!("nan as u8 is {}", f32::NAN.to_int_unchecked::<u8>());
+        // 300.0 is 44
+        // -100.0 as u8 is 0
+        // nan as u8 is 0
+    }
+}
+
+fn literals() {
+    let x = 1u8;
+    let y = 2u32;
+    let z = 3f32;
+    // Suffixed literals, their types are known at initialization
+
+    let i = 1;
+    let f = 1.0;
+    // Unsuffixed literals, their types depend on how they are used
+
+    println!("size of `x` in bytes: {}", std::mem::size_of_val(&x));
+    println!("size of `y` in bytes: {}", std::mem::size_of_val(&y));
+    println!("size of `z` in bytes: {}", std::mem::size_of_val(&z));
+    println!("size of `i` in bytes: {}", std::mem::size_of_val(&i));
+    println!("size of `f` in bytes: {}", std::mem::size_of_val(&f));
+    // size of `x` in bytes: 1
+    // size of `y` in bytes: 4
+    // size of `z` in bytes: 4
+    // size of `i` in bytes: 4
+    // size of `f` in bytes: 8
+}
+
+fn inference() {
+    let elem = 5u8;
+
+    let mut vec = Vec::new();
+    // At this point the compiler doesn't know the exact type of `vec`, it
+    // just knows that it's a vector of something (`Vec<_>`).
+
+    vec.push(elem);
+    // Aha! Now the compiler knows that `vec` is a vector of `u8`s (`Vec<u8>`)
+
+    println!("{:?}", vec);
+    // [5]
+}
+
+type NanoSecond = u64;
+type Inch = u64;
+type U64 = u64;
+
+fn aliasing() {
+    let nanoseconds: NanoSecond = 5 as U64;
+    let inches: Inch = 2 as U64;
+
+    println!(
+        "{} nanoseconds + {} inches = {} unit?",
+        nanoseconds,
+        inches,
+        nanoseconds + inches
+    );
+    // 5 nanoseconds + 2 inches = 7 unit?
+}
+```
 
 ## Conversion
 
+```rust
+use std::convert::From;
+
+#[derive(Debug)]
+struct MyNumber {
+    value: i32,
+}
+
+impl From<i32> for MyNumber {
+    fn from(item: i32) -> Self {
+        MyNumber { value: item }
+    }
+}
+
+fn from_and_into() {
+    let num_from = MyNumber::from(30);
+    println!("num_from is {:?}", num_from);
+    // num_from is MyNumber { value: 30 }
+
+    let int = 5;
+    let num_to: MyNumber = int.into();
+    println!("num_to is {:?}", num_to);
+    // num_to is MyNumber { value: 5 }
+}
+
+use std::convert::TryFrom;
+use std::convert::TryInto;
+
+#[derive(Debug)]
+struct EvenNumber(i32);
+
+impl TryFrom<i32> for EvenNumber {
+    type Error = ();
+    
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        if value % 2 == 0 {
+            Ok(EvenNumber(value))
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl PartialEq for EvenNumber {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+fn try_from_and_try_into() {
+    assert_eq!(
+        EvenNumber::try_from(8),
+        Ok(EvenNumber(8))
+    );
+    assert_eq!(
+        EvenNumber::try_from(5),
+        Err(())
+    );
+
+    let result: Result<EvenNumber, ()> = 8i32.try_into();
+    assert_eq!(
+        result,
+        Ok(EvenNumber(8))
+    );
+    let result: Result<EvenNumber, ()> = 5i32.try_into();
+    assert_eq!(
+        result,
+        Err(())
+    );
+}
+
+use std::fmt;
+use std::fmt::Formatter;
+
+struct Circle {
+    radius: i32,
+}
+
+impl fmt::Display for Circle {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "Circle of radius {}", self.radius)
+    }
+}
+
+fn to_and_from_strings() {
+    let circle = Circle { radius: 6 };
+    println!("{}", circle.to_string());
+    // Circle of radius 6
+
+    let parsed: i32 = "5".parse().unwrap();
+    let turbo_parsed = "10".parse::<i32>().unwrap();
+    let sum = parsed + turbo_parsed;
+    println!("Sum: {:?}", sum);
+    // Sum: 15
+}
+```
+
 ## Expressions
+
+```rust
+fn expressions() {
+    let x = 5u32;
+
+    let y = {
+        let x_squared = x * x;
+        let x_cube = x_squared * x;
+
+        x_cube + x_squared + x
+        // This no semicolon expression will be assigned to `y`
+    };
+
+    let z = {
+        2 * x;
+        // The semicolon suppresses this expression and `()` is assigned to `z`
+    };
+
+    println!("x is {:?}", x);
+    println!("y is {:?}", y);
+    println!("z is {:?}", z);
+    // x is 5
+    // y is 155
+    // z is ()
+}
+```
 
 ## Flow of Control
 
