@@ -7,6 +7,11 @@ mod f_conversion;
 mod g_expressions;
 mod h_flow_of_control;
 mod i_functions;
+mod j_modules;
+mod k_crates;
+mod l_cargo;
+mod m_attributes;
+mod n_generics;
 
 fn main() {
     // a_hello_world::main();
@@ -17,6 +22,9 @@ fn main() {
     // f_conversion::main();
     // g_expressions::main();
     // h_flow_of_control::main();
-    i_functions::main();
+    // i_functions::main();
+    // j_modules::main();
+    // m_attributes::main();
+    // n_generics::main();
 }
 // rustc main.rs
