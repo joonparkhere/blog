@@ -30,7 +30,7 @@ tags:
 3. Prover는 Verifier가 요구한 A (또는 B) 로 나온다.
 4. 위의 과정을 반복한다.
 
-Prover가 주문을 모르더라도 Verifier가 우연히 같은 방향으로 나오라고 할 경우, 주문을 알고 있는 것처럼 보일 수 있다. 이런 불상사를 막기위해 과정을 여러 번 반복한다. 우연히 방향이 일치할 확률은 $$1/2$$ 이다. 과정을 20번 정도 반복하면 $$(1/2)^{20}$$ 확률로 속일 수 있게 된다. 즉, 영지식 증명은 시행 횟수에 따라 **확률적**으로 Prover를 확신할 수 있게 된다.
+Prover가 주문을 모르더라도 Verifier가 우연히 같은 방향으로 나오라고 할 경우, 주문을 알고 있는 것처럼 보일 수 있다. 이런 불상사를 막기위해 과정을 여러 번 반복한다. 우연히 방향이 일치할 확률은 $1/2$ 이다. 과정을 20번 정도 반복하면 $(1/2)^{20}$ 확률로 속일 수 있게 된다. 즉, 영지식 증명은 시행 횟수에 따라 **확률적**으로 Prover를 확신할 수 있게 된다.
 
 ## Formal Definition
 
@@ -63,24 +63,24 @@ $$
 \forall x \in L, z \in \{0, 1\}^{*}, View_{\hat{V}}[P(x) \leftrightarrow \hat{V}(x, z)]=S(x, z)
 $$
 
-- $$P, V, S$$ : Turing Machines (튜링 머신; 여러 가지 기호들을 일정한 규칙에 따라 바꾸는 기계)
-- $$P(x)$$ : Prover, $$V(x, z)$$: Verifier, $$S(x, z)$$: Simulator
-- $$L$$ : Language
-- $$z$$ : Verifier의 Challenge Value
-- $$\leftarrow, \rightarrow$$ : Prover와 Verifier의 Challenge 과정 (Interactive Proof System)
-- $$View$$ : Interactive Proof 과정을 관찰하여 기록한 것
+- $P, V, S$ : Turing Machines (튜링 머신; 여러 가지 기호들을 일정한 규칙에 따라 바꾸는 기계)
+- $P(x)$ : Prover, $V(x, z)$: Verifier, $S(x, z)$: Simulator
+- $L$ : Language
+- $z$ : Verifier의 Challenge Value
+- $\leftarrow, \rightarrow$ : Prover와 Verifier의 Challenge 과정 (Interactive Proof System)
+- $View$ : Interactive Proof 과정을 관찰하여 기록한 것
 
 정의를 간략히 살펴보면, Verifier의 Challenge Value인 0, 1에 대한 Prover와 Verifier의 Challenge 증명 과정을 다른 튜링 머신에서 똑같이 시뮬레이션 할 수 있어야 한다는 것이다. 앞서 설명한 알리바바 동굴에 대입하면 다음과 같다.
 
 - Prover가 A 혹은 B로 들어간다.
-- Verifier는 Prover가 A로 나오게 할 지, B로 나오게 할 지를 Challenge Value인 $$z$$ 값으로 결정한다.
-- Prover는 Verifier의 $$z$$ 값에 따라 A 혹은 B로 나온다.
-- $$z$$ 값을 바꿔가며 이 과정을 반복하고, 기록한다.
+- Verifier는 Prover가 A로 나오게 할 지, B로 나오게 할 지를 Challenge Value인 $z$ 값으로 결정한다.
+- Prover는 Verifier의 $z$ 값에 따라 A 혹은 B로 나온다.
+- $z$ 값을 바꿔가며 이 과정을 반복하고, 기록한다.
 - 그리고 과정들을 튜링 머신에서 똑같이 실행하면, Prover는 사전에 시행한 시뮬레이션과 똑같은 방향으로 나와야 한다.
 
 Prover가 Challenge 과정에서 Verifier에게 Secret을 알고 있음을 확신시킬 수 있는 올바른 답을 계속 제공했다면, Verifier는 확률적으로 Prover가 Secret을 갖고 있음을 확신할 수 있다.
 
-여기서 주의할 점은 Verifier가 $$z$$ 값을 통해 Prover가 Secret을 알고 있는지 확률적으로 확신할 수 있지만, Secret이 무엇인 지에 대한 그 어떠한 정보도 알아내는 것은 불가능해야 한다는 점이다. 또한 시뮬레이션 할 때도 Prover의 Secret에 대한 정보는 알 수 없어야 한다.
+여기서 주의할 점은 Verifier가 $z$ 값을 통해 Prover가 Secret을 알고 있는지 확률적으로 확신할 수 있지만, Secret이 무엇인 지에 대한 그 어떠한 정보도 알아내는 것은 불가능해야 한다는 점이다. 또한 시뮬레이션 할 때도 Prover의 Secret에 대한 정보는 알 수 없어야 한다.
 
 또 한가지 주의할 점은 Verifier를 제외한 다른 사람들은 Prover가 Secret을 알고 있는 지에 대해 확신하는 것도 불가능하도록 만들어야 한다는 것이다.
 
@@ -94,40 +94,122 @@ Prior Agreement 가능성이 존재하기에, Prover와 Verifier를 제외한 �
 
 이를 조금 다른 관점에서 보면, Prover가 Secret을 알고 있다는 정보 조차 제 3자에게 노출되지 않았음을 의미한다. 그리고 Verifier 본인만이 Prover와 사전에 공모를 했는지 안했는지 알고 있기 때문에, Prover는 Verifier에게만 Secret을 알고 있다고 증명할 수 있다.
 
-여기서 중요한 조건은 Verifier가 Challenge Value인 $$z$$ 값을 공개하면 안된다는 점이다. 만약 Verifier가 $$z$$ 값을 도출하는 과정과 그 값을 제 3자에게 제공한다면, 제 3자는 Prover와 Verifier가 사전에 공모했다고 의심할 수 없게 된다. 이는 Prover의 Challenge 성공에 따라 Secret을 알고 있다는 것을 Verifier 외에도 제 3자가 확신할 수 있다는 것이고, 영지식을 잃는 것을 의미한다.
+여기서 중요한 조건은 Verifier가 Challenge Value인 $z$ 값을 공개하면 안된다는 점이다. 만약 Verifier가 $z$ 값을 도출하는 과정과 그 값을 제 3자에게 제공한다면, 제 3자는 Prover와 Verifier가 사전에 공모했다고 의심할 수 없게 된다. 이는 Prover의 Challenge 성공에 따라 Secret을 알고 있다는 것을 Verifier 외에도 제 3자가 확신할 수 있다는 것이고, 영지식을 잃는 것을 의미한다.
+
+## Number Theory
+
+ZKP를 조금 더 깊게 살펴보기 전에, 미리 리마인드하고 넘아가면 좋을 만한 부분들을 소개하려 한다. 대체적으로 암호학과 수학 관련 내용들이다.
+
+### Modulo Operation
+
+나눗셈 연산에서 나머지 연산을 하는, 코드에서는 주로 `%`로 표현하는 연산 과정을 말한다. 예를 들어, $46 \ \bmod \ 12 \equiv 10 \ \bmod \ 12$ 이다. 관련 특성들을 살펴보자.
+
+- $a \equiv b \pmod N$ 이면, 정수 $k$ 에 대해 $a+k \equiv b+k \pmod N$
+- $a \equiv b \pmod N$ 이면, 정수 $k$ 에 대해 $ka \equiv kb \pmod N$
+- $a \equiv b \pmod N$ 이면, 0보다 큰 정수 $k$ 에 대해 $a^k \equiv b^k \pmod N$
+- $ka \equiv kb \pmod N$ 이고 $k$ 가 $N$ 과 서로소이면, $a \equiv b \pmod N$
+
+### Modulo Multiplication Inverse
+
+어떤 수를 그 수의 역수와 곱하면 1이 된다. $A$ 의 역수는 ${1 \over A} \ (=A^{-1})$ 이다. 모듈러 연산에서 곱셈의 역원, 즉 모듈러 역수는 아래의 규칙으로 정해진다.
+
+- $N$ 과 서로소인 수인 $a$ 에 대하여 $aa^{-1} \equiv 1 \pmod N$
+
+모듈러 역수를 찾는 방법은 $Z_n = \{0, \ 1, \ 2, \ \ldots, \ (N-1)\}$ 에 속하는 수와 $a$ 를 곱한 값과 $\bmod N$ 연산 결과 값이 $1$ 인 경우를 찾는 것이다. 예를 들어 $5 \bmod 8$ 에 대한 역수를 찾는다면, 아래 표처럼 $5$ 가 답이 된다.
+
+|   $Z_8$    |  0   |  1   |  2   |  3   |  4   |  5   |  6   |  7   |
+| :--------: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| $\times 5$ |  0   |  5   |  10  |  15  |  20  |  25  |  30  |  35  |
+| $\bmod 8$  |  0   |  5   |  2   |  7   |  4   |  1   |  6   |  3   |
+
+### Fermat's Theorem
+
+페르마의 소정리는 아래와 같다.
+$$
+a^{p-1} \equiv 1 \pmod p \\
+(단, \ p: prime, \ a: coprime \ with \ p)
+$$
+
+### Euler's Totient Function
+
+오일러의 피 함수는 $n$ 보다 작고, $n$ 과 서로소인 정수의 수를 나타내며, $\varnothing(n)$ 로 표기한다.
+
+소수 $p$ 에 대해서는 $\varnothing(p)=p-1$ 를 만족한다. 그리고 서로 다른 두 소수 $p, \ q$ 에 대해서 아래의 식을 만족한다.
+$$
+\varnothing(pq)=\varnothing(p) \times \varnothing(q)=(p-1) \times (q-1)
+$$
+
+### Euler's Theorem
+
+오일러 정리는 페르마의 소정리를 일반화한 정리 중 하나이다.
+$$
+a^{\varnothing(n)} \equiv 1 \pmod n \\
+(단, \ a와 \ n은 \ 서로소)
+$$
+
+### An Order
+
+보다 일반화된 정리로, 규칙을 나타낸다.
+$$
+a^m \equiv 1 \pmod n
+$$
+가장 작은 양의 정수 $m$ 은 $a \pmod n$ 의 Order (순서, 내지는 규칙) 를 나타내며, 규칙의 주기 또한 알 수 있다. 예를 들어 $7 \pmod {19}$ 는 아래와 같이 연산 결과의 순서 (7, 11, 1) 와 주기 (3) 를 알 수 있다.
+$$
+7^1 \equiv 7 \pmod {19} \\
+7^2 \equiv 49 \equiv 11 \pmod {19} \\
+7^3 \equiv 343 \equiv 1 \pmod {19} \\
+7^4 \equiv 7 \pmod {19} \\
+7^5 \equiv 11 \pmod {19} \\
+7^6 \equiv 1 \pmod {19} \\
+\ldots
+$$
+
+### Primitive Root
+
+Order of $a \pmod n$ 와 $\varnothing(n)$ 이 같은 경우, $a$ 를 $n$ 의 원시근이라고 부른다. 예를 들어 소수 19의 원시근은 2, 3, 10, 13, 14, 15 이다.
+
+![](images/modulo-19.png "Modulo 19")
+
+### Discrete Logarithm
+
+이산 로그는 정수 $b$ 에 대하여 $b \equiv r \pmod p$ 를 만족하는 $r$ (단, $0 \le r \le p-1$ ) 이 존재할 때, $b \equiv a^i \pmod p$ 를 만족하는 $i$ (단, $0 \le i \le p-1$) 를 찾는 것을 의미한다.
+
+예를 들어 $p=9, \ a=2$ 인 경우를 생각해보자. $\varnothing(p)=6 \ (\{1, \ 2, \ 4, \ 5, \ 7, \ 8\})$ 이다. 이에 따라 $i=6$ 이라고 주어질 때, $b$ 를 찾는 것은 $2^6 \equiv 1 \pmod 9$ 으로, 매우 쉽다. 하지만 반대로 $b=1$ 이 주어지고 $i$ 를 찾아야 할 경우, $2^i \equiv 1 \pmod 9$ 를 계산하는 것은 어렵다. 특히, 암호학에서는 매우 큰 소수 $p$ 를 이용하기 때문에 상당히 버거운 작업이 된다.
+
+이러한 Trapdoor 성질로 인해 여러 암호 알고리즘 (Diffie-Hellman Key Sharing, Digital Signature Algorithm 등) 에서 이산 로그가 활용된다.
 
 ## ZKP Under the Hood
 
-Discrete Log (이산 로그) 를 이용하여 구현된 ZKP 과정을 알아보려 한다. 이산 로그의 역함수인 이산 거듭제곱 ($$a^{x}=b$$) 은 호율적으로 계산할 수 있지만, 이산 로그 계산 ($$x=log_{a}b$$) 은 어려운 것으로 알려진 군이 존재한다. Diffie-Hellman Key Sharing, Digital Signature Algorithm 등 일부 암호는 이런 비대칭성을 바탕으로 설계된다. ZKP도 이를 이용해 응용된 암호학 중 하나다.
+Discrete Logarithm (이산 로그) 를 이용하여 구현된 ZKP 과정을 알아보려 한다. 이산 로그의 역함수인 이산 거듭제곱 ($a^{x}=b$) 은 효율적으로 계산할 수 있지만, 이산 로그 계산 ($x=log_{a}b$) 은 어려운 것으로 알려진 군이 존재하는데, ZKP도 이를 이용해 응용된 암호학 중 하나다.
 
-- $$x$$ : Secret
-- $$y$$ : Given Value by Prover
-- $$p$$ : Large Prime
-- $$g$$ : Generator
+- $x$ : Secret
+- $y$ : Given Value by Prover
+- $p$ : Large Prime
+- $g$ : Generator
 
 위의 기호를 참고하여, 아래의 과정을 통해 Verifier에게 Secret의 정보를 알리지 않고, Secret을 가지고 있음을 증명할 수 있다.
 
-0. Prover는 Secret인 $$x$$ 값을 알고 있다.
+0. Prover는 Secret인 $x$ 값을 알고 있다.
 
-1. Prover와 Verifier는 Prime $$p$$ 와 Generator $$g$$ 에 대해 합의한다.
+1. Prover와 Verifier는 Prime $p$ 와 Generator $g$ 에 대해 합의한다.
 
-2. Prover는 $$y=g^{x}\ mod\ p$$ 를 계산하여 $$y$$ 값을 Verifier에게 전달한다.
+2. Prover는 $y=g^{x}\ mod\ p$ 를 계산하여 $y$ 값을 Verifier에게 전달한다.
 
 3. 아래의 과정을 계속 반복하여 확률적으로 확신할 수 있게 된다.
 
-   1. Prover는 $$r\in U[0,\ p-2]$$ 에 해당하는 랜덤한 $$r$$ 값을 골라서, $$C=g^{r} \ mod \ p$$ 를 계산하여 $$C$$ 값을 Verifier에게 전달한다.
+   1. Prover는 $r\in U[0,\ p-2]$ 에 해당하는 랜덤한 $r$ 값을 골라서, $C=g^{r} \ mod \ p$ 를 계산하여 $C$ 값을 Verifier에게 전달한다.
 
-   2. Verifier는 Prover에게 $$(x+r) \ mod \ (p-1)$$ 또는 $$r$$ 값을 요청하여 전달 받는다.
+   2. Verifier는 Prover에게 $(x+r) \ mod \ (p-1)$ 또는 $r$ 값을 요청하여 전달 받는다.
 
-      - $$(x+r) \ mod \ (p-1)$$ 경우
+      - $(x+r) \ mod \ (p-1)$ 경우
 
-        Verifier는 $$C$$ 값과 $$y$$ 값을 알고 있으므로, 수식 $$(C \cdot y) \ mod \ p \equiv g^{(x+r) \ mod \ (p-1)} \ mod \ p$$ 을 통해 Prover가 $$x$$ 값을 알고 있는지 검증한다.
+        Verifier는 $C$ 값과 $y$ 값을 알고 있으므로, 수식 $(C \cdot y) \ mod \ p \equiv g^{(x+r) \ mod \ (p-1)} \ mod \ p$ 을 통해 Prover가 $x$ 값을 알고 있는지 검증한다.
 
-      - $$r$$  경우
+      - $r$  경우
 
-        Verifier는  $$C$$ 값을 알고 있으므로, 수식 $$C \equiv g^{r} \ mod \ p$$ 을 통해 Prover가 $$x$$ 값을 알고 있는지 검증한다.
+        Verifier는 $C$ 값을 알고 있으므로, 수식 $C \equiv g^{r} \ mod \ p$ 을 통해 Prover가 $x$ 값을 알고 있는지 검증한다.
 
-      여기서 $$(x+r) \ mod \ (p-1)$$ 값은 $$x \ mod \ (p-1)$$ 값을 암호화하여 Prover가 가진 $$x$$ 값을 유추하기 굉장히 어렵게 만든다. $$r$$ 값이 $$[0, \ p-2]$$ 범위에서 실제로 랜덤하게 선택되었다면, $$x$$ 값에 대한 어떠한 정보도 노출하지 않게 된다.
+      여기서 $(x+r) \ mod \ (p-1)$ 값은 $x \ mod \ (p-1)$ 값을 암호화하여 Prover가 가진 $x$ 값을 유추하기 굉장히 어렵게 만든다. $r$ 값이 $[0, \ p-2]$ 범위에서 실제로 랜덤하게 선택되었다면, $x$ 값에 대한 어떠한 정보도 노출하지 않게 된다.
 
 ## Reference
 
