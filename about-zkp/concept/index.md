@@ -111,7 +111,7 @@ ZKP를 조금 더 깊게 살펴보기 전에, 미리 리마인드하고 넘아�
 
 ### Modulo Multiplication Inverse
 
-어떤 수를 그 수의 역수와 곱하면 1이 된다. $A$ 의 역수는 ${1 \over A} \ (=A^{-1})$ 이다. 모듈러 연산에서 곱셈의 역원, 즉 모듈러 역수는 아래의 규칙으로 정해진다.
+어떤 수를 그 수의 역수와 곱하면 1이 된다. $A$ 의 역수는 $\frac{1}{A} \ (=A^{-1})$ 이다. 모듈러 연산에서 곱셈의 역원, 즉 모듈러 역수는 아래의 규칙으로 정해진다.
 
 - $N$ 과 서로소인 수인 $a$ 에 대하여 $aa^{-1} \equiv 1 \pmod N$
 
@@ -126,8 +126,10 @@ ZKP를 조금 더 깊게 살펴보기 전에, 미리 리마인드하고 넘아�
 
 페르마의 소정리는 아래와 같다.
 $$
+\begin{matrix}
 a^{p-1} \equiv 1 \pmod p \\
 (단, \ p: prime, \ a: coprime \ with \ p)
+\end{matrix}
 $$
 
 ### Euler's Totient Function
@@ -143,8 +145,10 @@ $$
 
 오일러 정리는 페르마의 소정리를 일반화한 정리 중 하나이다.
 $$
+\begin{matrix}
 a^{\varnothing(n)} \equiv 1 \pmod n \\
 (단, \ a와 \ n은 \ 서로소)
+\end{matrix}
 $$
 
 ### An Order
@@ -155,6 +159,7 @@ a^m \equiv 1 \pmod n
 $$
 가장 작은 양의 정수 $m$ 은 $a \pmod n$ 의 Order (순서, 내지는 규칙) 를 나타내며, 규칙의 주기 또한 알 수 있다. 예를 들어 $7 \pmod {19}$ 는 아래와 같이 연산 결과의 순서 (7, 11, 1) 와 주기 (3) 를 알 수 있다.
 $$
+\begin{matrix}
 7^1 \equiv 7 \pmod {19} \\
 7^2 \equiv 49 \equiv 11 \pmod {19} \\
 7^3 \equiv 343 \equiv 1 \pmod {19} \\
@@ -162,6 +167,7 @@ $$
 7^5 \equiv 11 \pmod {19} \\
 7^6 \equiv 1 \pmod {19} \\
 \ldots
+\end{matrix}
 $$
 
 ### Primitive Root
