@@ -12,6 +12,7 @@ mod k_crates;
 mod l_cargo;
 mod m_attributes;
 mod n_generics;
+mod o_scoping_rules;
 
 fn main() {
     // a_hello_world::main();
@@ -26,5 +27,6 @@ fn main() {
     // j_modules::main();
     // m_attributes::main();
     // n_generics::main();
+    o_scoping_rules::main();
 }
 // rustc main.rs
