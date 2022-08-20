@@ -1,6 +1,6 @@
 ---
 title: Noteworthy Books
-date: 2022-08-16
+date: 2022-08-20
 pin: false
 tags:
 - Self Improvement
