@@ -1,12 +1,172 @@
 ---
 title: Hello Rust By Example
-date: 2022-08-03
+date: 2022-08-23
 pin: false
 tags:
 - Rust
 ---
 
 ## Introduction
+
+### Strict Syntax
+
+Rust는 정적 언어이며, 비교적 문법이 엄격한 편이다.
+
+```rust
+let an_integer = 1u32;
+let a_boolean = true;
+let unit = ();
+
+let copied_integer = an_integer;
+
+println!("An integer: {:?}", copied_integer);
+println!("A boolean: {:?}", a_boolean);
+println!("Meet the unit value: {:?}", unit);
+// An integer: 1
+// A boolean: true
+// Meet the unit value: ()
+```
+
+Rust에서 선언된 변수는 기본적으로 불변 (Immutable) 하여 값을 변경할 수 없다. 가변적인 (Mutable) 변수를 선언하려면 `mut` 키워드를 명시해야 한다.
+
+```rust
+let immutable_binding = 1;
+// immutable_binding += 1; // compiler throw error because immutable by default
+
+let mut mutable_binding = 1;
+println!("Before mutation: {}", mutable_binding);
+// Before mutation: 1
+
+mutable_binding += 1;
+println!("After mutation: {}", mutable_binding);
+// After mutation: 2
+```
+
+그리고 Rust 컴파일러는 문법이 조금이라도 잘못되면 에러를 낸다. 이러한 엄격함이 언어의 러닝 커브를 높이기도 하지만, 동시에 개발자의 폭주를 막는 역할도 한다. 그래도 그만큼 컴파일러가 꽤나 친절해서 오류가 난 부분과 이유를 상세하게 알려주어, 많은 도움을 받을 수 있다.
+
+### No Null
+
+대부분의 언어에서 Null 값을 Non-Null 값으로 사용하려 할 때 문제가 발생한다. Rust에는 Null이 없다. 대신 표준으로 제공하는 `Option` Enum 멤버로 `None`과 `Some`이 있다.
+
+```rust
+enum Option<T> {
+    Some(T),
+    None,
+}
+```
+
+`Option<T>`와 `T`는 서로 다른 타입이기 때문에, 컴파일러는 `Option<T>`  값이 무조건 타당한 값인 것처럼 사용하는 것을 거부한다. 예를 들어 아래 코드는 서로 다른 타입인 `i8`과 `Option<i8>`을 더하려고 하기 때문에 컴파일되지 않을 것이다.
+
+```rust
+let x: i8 = 1;
+let y: Option<i8> = Some(5);
+
+// let sum = x + y; // no implementation for `i8 + std::option::Option<i8>`
+```
+
+이는 두 개가 서로 다른 타입이기 때문이다.
+
+```rust
+fn plus_one(x: Option<i8>) -> Option<i8> {
+    match x {
+        None => None,   
+        Some(i) => Some(i + 1), 
+    }
+}
+
+let one: Option<i8> = Some(1);
+let two = plus_one(one); // Some(2)
+let none = plus_one(None); // None
+```
+
+이런식으로 Rust 컴파일러는 항상 수행하려고 하는 연산과 결과가 정당한 지 보장할 수 있게 된다. 그래서 개발자는 그 값이 Null 인지 아닌지 점검할 필요없이 확실을 가지고 사용할 수 있다. 특정 값이 `Option<i8>`을 가지고 있을 경우에는 그 값이 `i8` 값을 가지고 있지 않을 수 있음을 염두에 둬야하고, 컴파일러는 그 값을 사용하기 전에 가능한 경우를 모두 처리하는 지 확실하게 점검한다.
+
+즉, 개발자는 `Options<T>`를 `T`로 바꿔줘야 한다는 것이다. 이러한 작업은 Null로 인해 만연하게 발생하는 문제 (Null인 값을 Null이 아닐 거라고 생각하여 동작하는 로직 등) 를 잡아낸다. 따라서 Null일 수 있는 값을 쓰기 위해서는, 반드시 `Option<T>` 타입을 명시적으로 사용해야만 한다. 그리고 그 값을 사용할 때, Null일 경우를 또한 명시적으로 처리해야만 한다.
+
+### Ownership
+
+Rust는 소유권이라는 방식으로 메모리를 관리한다. C에서는 `malloc`이나 `free` 같은 함수를 이용해 개발자가 직접 메모리를 할당 및 해제한다. Java에서는 GC (Garbage Collector) 가 돌며 메모리를 정리한다. 개발자가 직접 메모리를 관리하면 실수할 위험이 크고, GC를 이용하면 프로그램 성능이 저하될 수 있다. 이 대신 Rust는 소유권이라는 방식으로 메모리를 관리한다.
+
+- 각 값은 Owner라고 불리는 변수를 갖는다.
+- 한 번에 하나의 Owner만 가질 수 있다.
+- Owner가 범위 (Scope) 를 벗어나면 값이 버려진다.
+
+```rust
+let x = 5u32; // _Stack_ allocated integer
+let y = x; // Copy `x` into `y` - no resources are moved
+println!("x is {}, and y is {}", x, y);
+// x is 5, and y is 5
+```
+
+```rust
+fn create_box() {
+    let _box1 = Box::new(3i32); // Allocate an integer on the heap
+    // `_box1` is destroyed here, and memory gets freed
+}
+
+let _box2 = Box::new(5i32); // Allocate an integer on the heap
+
+{
+    let _box3 = Box::new(4i32); // Allocate an integer on the heap
+    // `_box3` is destroyed here, and memory gets freed
+}
+
+for _ in 0u32..1_000 {
+    create_box(); // No need to manually free memory!
+}
+
+// `_box2` is destroyed here, and memory gets freed
+```
+
+여기서 주의해야할 점이 있다. 두 값 (`s1`, `s2`) 이 같은 Heap 메모리 주소를 가르킬 때, `s1`이 Scope를 벗어났을 때 메모리가 한 번 해제되고, 그 뒤에 `s2`가  Scope를 벗어날 때 같은 메모리 공간을 다시 해제하게 되어, 보안 취약점으로 이어질 수 있다. 그래서 Rust는 할당된 Stack 메모리를 복사할 때 기존에 할당한 변수를 무효화한다.
+
+```rust
+fn destroy_box(c: Box<i32>) { // Takes ownership of the heap allocated memory
+    println!("Destroying a box that contains {}", c);
+    // `c` is destroyed and the memory freed
+}
+
+let a = Box::new(5i32); // `a` is a pointer to a _heap_ allocated integer
+let b = a; // Move `a` into `b`
+// println!("a contains: {}", a); // Error! `a` can no longer access the data
+
+destroy_box(b); // This function takes ownership of the heap allocated memory from `b`
+
+// println!("b contains: {}", b); // Error! Dereference freed memory is forbidden by the compiler
+```
+
+### Reference & Borrowing
+
+함수의 인자로 값을 넘기되, 소유권을 이동시키고 싶지 않을 때는 값의 Reference (참조) 만 넘겨주면 된다. 이를 Borrowing (빌림) 이라고 한다.
+
+```rust
+fn get_length(s2: &String) -> usize {
+    println!("{:?}", s2.as_ptr()); // "0x5581762b0a40"
+    s2.len()
+}
+
+let s1 = String::from("hello");
+let len = get_length(&s1);
+println!("{:?}", s1.as_ptr()); // "0x5581762b0a40"
+
++----------+---+        +----------+---+        +---+---+
+| ptr      | ---------->| ptr      | ---------->| 0 | h |
++----------+---+        +----------+---+        +---+---+
+       s2               | len      | 5 |        | 1 | e |
+                        +----------+---+        +---+---+
+                        | capacity | 5 |        | 2 | l |
+                        +----------+---+        +---+---+
+                               s1               | 3 | l |
+                                                +---+---+
+                                                | 4 | o |
+                                                +---+---+
+```
+
+이렇듯, `get_length` 내에서 `s2`의 포인터가 `s1`을 가리키고, `s1`은 Heap 메모리의 문자열 데이터를 가리키게 된다. 함수가 참조만 받았기 때문에 함수 호출 이후에도 `s1`은 유효하다.
+
+
+
+## Basic
 
 ```rust
 mod mod1;
@@ -3042,4 +3202,9 @@ fn lifetime_elision() {
 ```rust
 
 ```
+
+## Reference
+
+- [Simon Park ,"러스트의 멋짐을 모르는 당신은 불쌍해요"](https://parksb.github.io/article/35.html)
+- [Tino Care, "How Microsoft Is Adopting Rust"](https://medium.com/@tinocaer/how-microsoft-is-adopting-rust-e0f8816566ba)
 
