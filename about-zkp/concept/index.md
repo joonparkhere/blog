@@ -217,6 +217,21 @@ Discrete Logarithm (이산 로그) 를 이용하여 구현된 ZKP 과정을 알�
 
       여기서 $(x+r) \ mod \ (p-1)$ 값은 $x \ mod \ (p-1)$ 값을 암호화하여 Prover가 가진 $x$ 값을 유추하기 굉장히 어렵게 만든다. $r$ 값이 $[0, \ p-2]$ 범위에서 실제로 랜덤하게 선택되었다면, $x$ 값에 대한 어떠한 정보도 노출하지 않게 된다.
 
+여기서 만약 Prover가 실제 `x` 값은 모른채, Challenge를 예측한다면 어떻게 될까?
+
+- Verifier가 `r`을 요청할 것이라고 예상한다면, Prover는 단순히 랜덤 값 `r`을 선택해서 `C` 값을 계산하여 전달하면 된다. `C` 계산에 필요한 `g`, `p`는 모두 공유된 값이기 때문이다.
+
+- Verifier가 $(x+r) \ mod \ (p-1)$을 요청할 것이라고 예상한다면, Prover는 `x` 값을 모르기 때문에 대신 랜덤 값 `r'`을 선택한다. 그리고 $C'=g^{r'} \cdot (g^x)^{-1} \mod p$ 를 계산하여 `C'`을 전달한다. 그리고 $(x+r) \ mod \ (p-1)$ 대신 $r'$ 을 알려준다.
+
+  여기서 `C'`이 저렇게 되어야 하는 이유는 모듈러 연산의 곱셈 역원이기 위해서 이다. `C'`을 전달받은 Verifier는 위에서 설명한대로 수식을 통해 검증하는데, 전달받은 값들을 넣어보면 아래와 같이 계산된다.
+  $$
+  \begin{matrix}
+  (C' \cdot y) \mod p \equiv g^{r'} \mod p \\
+  (g^{r'} \cdot (g^x)^{-1} \cdot g^x) \mod p \equiv g^{r'} \mod p
+  \end{matrix}
+  $$
+  따라서 Prover가 실제 `x` 값을 모르더라도 알고 있는 것처럼 행동할 수 있다. 이런 경우의 가능성을 낮추기 위해, 위 과정을 여러번 반복하여 확률적으로 확신하는 것이다.
+
 ## Reference
 
 - [Wikipedia ZKP](https://en.wikipedia.org/wiki/Zero-knowledge_proof)
