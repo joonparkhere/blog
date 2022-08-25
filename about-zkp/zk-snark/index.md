@@ -324,8 +324,34 @@ $$
 
 이를 통해 Prover가 증명을 위해 제시해야 하는 Proof가 단 8개의 점 ($=288 bytes$) 이며, 이는 문제의 크기와 상관없이 일정함을 알 수 있다. 또한 Verifier 역시 8개의 점들로 간단한 연살을 통해 옳음을 납득할 수 있다. zk-SNARKs의 큰 장점 중 하나가 바로 이 증명의 간결함이다.
 
+## Trusted Setup
+
+![](images/trusted-setup-ceremony.png)
+
+두 개의 타원 곡선 점들의 Series에서 시작된다.
+$$
+\begin{matrix}
+[ \ G_1, \ G_1 * s, \ G_1 * s^2, \ ... \ , \ G_1 * s^{n_1-1} \ ] \\
+[ \ G_2, \ G_2 * s, \ G_2 * s^2, \ ... \ , \ G_2 * s^{n_2-1} \ ]
+\end{matrix}
+$$
+주로 100명이 넘는 참여자가 참여하여 Setup 과정을 수행한다. 이들 중 단 한 명이라도 자신의 Secret을 외부에 공개하지 않는다면, Setup 과정은 신뢰할 수 있게 된다.
+
+![](images/multi-participant-setup.png)
+
+각 참여자는 랜덤 값 `t` 를 골라서 아래처럼 계산하여 다음 참여자에게 넘겨준다.
+$$
+\begin{matrix}
+[ \ G_1, \ G_1 * s * t, \ G_1 * s^2 * t^2, \ ... \ , \ G_1 * s^{n_1-1} * t^{n_1-1} \ ] \\
+[ \ G_2, \ G_2 * s * t, \ G_2 * s^2 * t^2, \ ... \ , \ G_2 * s^{n_2-1} * t^{n_2-1} \ ]
+\end{matrix}
+$$
+![](images/verify-setup.png)
+
 ## Reference
 
 - [Jungwoo Pro, "Zero-Knowledge proof :: chapter 1. Introduction to Zero-Knowledge Proof & zk-SNARKs"](https://medium.com/decipher-media/zero-knowledge-proof-chapter-1-introduction-to-zero-knowledge-proof-zk-snarks-6475f5e9b17b)
 - [Jihyeok Choy, "Zero-Knowledge proof :: chapter 2. Deep Dive into zk-SNARKs"](https://medium.com/decipher-media/zero-knowledge-proof-chapter-2-deep-dive-into-zk-snarks-f8b16e1b7b4c)
 - [Vitalik Buterin, "Zk-SNARKs: Under the Hood"](https://medium.com/@VitalikButerin/zk-snarks-under-the-hood-b33151a013f6)
+- [Vitalik Buterin, "How do trusted setups work?"](https://vitalik.ca/general/2022/03/14/trustedsetup.html)
+
