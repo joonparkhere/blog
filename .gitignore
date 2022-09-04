@@ -3,3 +3,4 @@ venv
 node_modules
 */project/*/target
 .*DS_Store
+.obsidian

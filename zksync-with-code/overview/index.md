@@ -1,6 +1,6 @@
 ---
 title: zkSync 구조 Overview
-date: 2022-08-30
+date: 2022-09-04
 pin: false
 tags:
 - Blockchain
@@ -30,7 +30,16 @@ tags:
 
 ## Transaction Confirmation & Finality
 
+유저가 블록체인 트랜잭션을 서명하고 제출했다고 해서, 그 요청이 즉각적으로 처리 및 반영되지 않는다. P2P 네트워크 특성으로 인해 확정짓기까지의 시간이 필요한데, 여기서 등장하는 두 개념이 Confirmation과 Finality다.
 
+Confirmation은 블록체인 노드 중 하나가 제출한 트랜잭션을 블록에 담아서 체인에 연결했음을 의미한다. 이더리움 L1에서 이 의미는 해당 트랜잭션이 담긴 블록을 PoW로 채굴했다는 의미가 될 것이고, Rollup L2에서 이 의미는 단순 노드가 해당 트랜잭션이 포함된 블록을 생성하여 체인에 이었다는 의미가 된다.
+
+Finality는 Confirmation 상태의 트랜잭션이 향후 변경될 가능성이 현격히 적어져, 확정되었다고 얘기할 수 있음을 의미한다. 블록체인은 단일한 체인로 합의되어 이어지는 것이 아니라, 특정 합의 방식을 이용해 여러 개의 체인들 중 하나를 선택한다. 그래서 유저가 제출한 트랜잭션이 확정되기 위해서는 Confirmation 이후에도 해당 블록 뒤에 몇 개의 블록이 이어져있어야 한다. 보통 이더리움 L1에서는 6개 이상의 블록이 이어졌다면 확정되었다고 여긴다. Rollup L2에서의 Finality는 L1으로 롤업한 트랜잭션이 Finality 상태가 되어야 L2 트랜잭션이 Finality 상태가 되었다고 할 수 있다. 따라서 중요한 포인트는 L2에서 어떻게, 그리고 어느 정도의 텀을 두어 L1으로 롤업할 것인가 이다.
+
+비트코인, 이더리움 네트워크의 Finality는 확률에 의존한다. 더 많은 블록이 쌓일수록 Revert될 확률이 줄어들어, Finality 상태 여부를 결정한다. 그러나 ZK Rollup에서 Finality는 기존 L1과는 조금 다르다. L2 블록이 생성되고 해당 State가 L1에 커밋되면, 증명 과정이 시작된다. 블록에 담긴 트랜잭션들에 대한 SNARK 검증 증거가 생성되고, L1 스마트 컨트랙트에 제출된다. 그리고 L1 스마트 컨트랙트가 증거 검증을 마치면, 그리고 L1 블록이 Finality 상태가 되면 L2 블록도 Finality 상태가 된다.
+
+그렇다면 ZK Rollup은 어느정도의 주기마다 L1에 트랜잭션과 State를 커밋할까?
+SNARK Proof를 생성하는 과정이 꽤나 시간이 소요되기 때문에, 현 시점에서 일반적인 서버 하드웨어 성능 기준으로1000개의 트랜잭션이 담긴 블록에 대해 약 10분이 소요된다. 이는 zk-SNARK에 대한 연구와 전반적인 하드웨어 성능에 따라 향후 1분 내로 이뤄질 것으로 예상된다.
 
 ## Decentralization
 
@@ -45,9 +54,25 @@ tags:
 
 현 시점에서의 zkSync는 Level 4에 해당한다.
 
+## zkSync High-Level Overview
 
+- zkSync Smart Contract
+	- Manage Users' Balances and Verify Correctness of Operations
+- Prover Application
+	- Poll for Available Jobs and Get a Witness from Server
+	- Create a Proof for an Executed Block
+	- Report a Proof to Server
+- Server Application
+	- Running Node
+	- Monitor On-Chain Operations
+	- Accept Transactions
+	- Generate L2 Blocks
+	- Request Proofs for Executed Blocks
+	- Publish Data to Smart Contract
 
 ## Reference
 
 - [zkSync Official Document](https://docs.zksync.io/)
+- [zkSync 2.0 Official Document](https://v2-docs.zksync.io)
+- [Ethereum Official Document, "Finality"](https://ethereum.org/en/developers/docs/consensus-mechanisms/pow/#finality)
 
