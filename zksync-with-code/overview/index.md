@@ -1,6 +1,6 @@
 ---
 title: zkSync 구조 Overview
-date: 2022-09-04
+date: 2022-09-06
 pin: false
 tags:
 - Blockchain
@@ -69,6 +69,16 @@ SNARK Proof를 생성하는 과정이 꽤나 시간이 소요되기 때문에, �
 	- Generate L2 Blocks
 	- Request Proofs for Executed Blocks
 	- Publish Data to Smart Contract
+
+## Universal CRS Setup
+
+ZKP로써, PLONK Proof 시스템을 사용한다.
+이는 Common Reference String (CRS) 라고 하는 Trusted Setup을 필요로 한다.
+zkSync 개발진인 Matter Labs은 [AZTEC](https://aztec.network/) 프로토콜의 PLONK 시스템에 참여 중이다.
+맨처음 한 번만 Setup을 진행해 놓으면, 향후 어느 애플리케이션에도 모두 재사용 가능하다.
+
+이 글 작성일 기준, AZTEC 프로토콜에는 202개의 참여자가 Setup 과정에 기여 중이다.
+자세한 목록은 [여기](https://ignition.aztecprotocol.com/)에서 확인할 수 있다.
 
 ## Reference
 
