@@ -1,2 +1,0 @@
-hello/core/CoreApplication.java
- hello.core.CoreApplication

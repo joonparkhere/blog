@@ -1,2 +1,0 @@
-study/datajpa/DataJpaApplication.java
- study.datajpa.DataJpaApplication

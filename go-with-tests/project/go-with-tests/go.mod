@@ -1,1 +1,0 @@
-module "go-with-tests"

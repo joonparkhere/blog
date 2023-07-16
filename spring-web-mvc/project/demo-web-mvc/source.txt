@@ -1,3 +1,0 @@
-인프런: 스프링 웹 MVC [백기선]
-
-https://www.inflearn.com/course/%EC%9B%B9-mvc#
