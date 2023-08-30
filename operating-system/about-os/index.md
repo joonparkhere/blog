@@ -1,6 +1,6 @@
 ---
 title: "[CS] 운영체제 감 잡기"
-date: 2023-08-29
+date: 2023-08-30
 pin: false
 tags:
 - Computer Science
@@ -14,10 +14,7 @@ tags:
 ![OS Definition Diagram](images/os-definition-diagram.png)
 
 - Manage Computer HW & SW Resources
-
-- Provide Common Service for Programs
-
-  (System Calls)
+- Provide Common Service for Programs - System Calls
 
 ### System Organization
 
@@ -204,15 +201,71 @@ tags:
 
 
 
-## Dual Mode Operations
+## Mode Operations
+
+### Dual Mode
+
+- User Mode
+
+  On Behalf of User Application
+
+- Kernel Mode
+
+  On Behalf of OS
+
+- Mode Change
+
+  Interrupt or Trap Occurs $\rightarrow$ HW switches Mode
+
+![Example of Interrupts and Traps](images/interrupt-trap-diagram.png)
 
 ### Interrupt
 
+- Unexpected External Event
+
+  주로 I/O Devices에서 발생
+
+- From HW or SW
+
 ### Trap
 
-### System Calls
+- SW Generated Interrupt by
+  - Exception - An Error of the Running Program
+  - System Call - A Specific Request from a User Program
+
+### System Call Interface
+
+![System Call Flow Example](images/system-call-diagram.png)
+
+- Interface between OS and Applications / Processes
+- Executed by a Generic Trap Instruction
 
 
 
 ## Virtualization
+
+### Concept
+
+![Virtualization Example Layers](images/virtualization-layer.png)
+
+- Server Virtualization Method which for Multiple isolated User-Space Instances
+
+- Program이 Virtual Partitions에 분리되어 위치
+
+  Emulator or Virtual Machine 등을 통해서가 아닌 일반적인 OS System Call 이용
+
+### Benefits
+
+- Server Consolidation with Isolation
+  - Less Worry about Underutilized
+  - Cost Savings
+- Simplified Management
+  - Provisioning & Monitoring
+  - Dynamic Load Balancing
+- Improved Availability / Reliability
+  - Automatic Restart
+  - Fault Tolerance
+  - Disaster Recovery
+- SW Development
+  - Testing
 
