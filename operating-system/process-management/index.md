@@ -25,6 +25,24 @@ tags:
   - PCB, Process Control Block에 할당된 Entity
   - Active Entity
 
+### Process vs. Thread
+
+- Process
+
+  - 독립적인 실행 단위로, 자체 Memory 공간, File Descriptor, System Resource 소유
+  - 다른 Process와는 완전히 격리되어 있음
+  - 각 Process는 별도의 Program Instance로 간주
+
+- Thread
+
+  - 하나의 Process 내에서 실행되는 작업 단위
+
+    한 Process가 여러 Thread를 가질 수 있음
+
+  - Thread는 부모 Process의 Memory 공간을 공유하므로 Thread 간 통신이 수월함
+
+  - Thread Context Switching이 Process보다 빠름
+
 ### Process Context
 
 - Process는 고유 Context를 가짐
@@ -234,11 +252,36 @@ tags:
 
 ## Inter-Process Communication
 
+- For Process Cooperation
+  - Information Sharing
+  - Computation Speedup
+  - Modularity
+  - Convenience
+
 ### Message Passing
+
+![Message Passing Flow](images/message-passing-flow.png)
+
+- Direct or Indirect Communication
+- Synchronization Mechanism 필요
+- Buffering Mechanism 필요
 
 ### Shared Memory
 
-### Remote Procedure Call
+![Shared Memory Diagram](images/shared-memory-diagram.png)
 
-### Distributed Shared Memory
+- Indirect Communication
 
+### RPC, Remote Procedure Call
+
+![RPC Diagram](images/rpc-diagram.png)
+
+- Procedure Call Mechanism을 추상화시킨 것
+- Message Passing 프레임워크 상에서 동작
+
+### DSM, Distributed Shared Memory
+
+![DSM Diagram](images/dsm-diagram.png)
+
+- 느슨히 결합된 Distributed Memory System에 적용되는 Shared Memory 패러다임
+- Message Passing 프레임워크 상에서 동작
