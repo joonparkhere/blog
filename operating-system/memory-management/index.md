@@ -227,6 +227,3 @@ tags:
 
   ![Segmentation Address Mapping Diagram](images/segmentation-address-mapping-diagram.png)
 
-
-
-## Virtual Memory
