@@ -1,6 +1,6 @@
 ---
 title: "[CS] 운영체제 가상 메모리"
-date: 2023-09-08
+date: 2023-09-10
 pin: false
 tags:
 - Computer Science
@@ -252,3 +252,326 @@ tags:
 
 ![Hybrid Mechanism Direct Mapping Procedure Example](images/hybrid-direct-mapping.png)
 
+## Performance Improvement
+
+### Locality
+
+- Temporal Locality
+
+  ![Temporal Locality Diagram](images/temporal-locality.png)
+
+- Spatial Locality
+
+  ![Spatial Locality Diagram](images/spatial-locality.png)
+
+### Cost Model
+
+- Purpose
+
+  Designed to Reduce Number of Page Faults
+
+- Goal
+
+  Reduce of Context Switching Overhead or Kernel Intervention Overhead
+
+### Page Reference Model
+
+- Sequence of Referenced Page Numbers in Execution
+
+  $\omega=r_1 r_2 \cdots r_i \cdots r_T$
+
+  - Page Number $r_i$
+  - Total Number of Memory Access $T$
+
+### HW Components
+
+- Address Translation Device
+
+  - Dedicated PTBR, Page Table Base Register
+  - Cache Memory
+  - TLB, Translation Lock-aside Buffer
+
+- Bit Vectors
+
+  ![Bit Vectors Diagram](images/bit-vectors-diagram.png)
+
+  - Reference Bits
+
+    ![Reference Bits Diagram](images/reference-bit-diagram.png)
+
+    - 특정 주기마다 모든 Bit를 Reset 함
+
+  - Update Bits
+
+    - 주기적인 Reset 과정 없음
+    - Necessary Write-Back to Disk
+
+### SW Components
+
+- Allocation Strategies
+
+  - How Much Space to Allocate
+
+    - Fixed Allocation
+
+    - Variable Allocation
+
+  - Consideration
+    - If Too Much Allocation, Memory Waste
+    - If Too Small Allocation, Increase of Page Fault Rate
+
+- Fetch Strategies
+
+  - When to Bring a Page
+
+    - Demand Fetch
+
+      Page Fault Overhead 발생
+
+    - Anticipatory Fetch
+
+      Prediction Overhead 발생
+
+- Placement Strategies
+
+  - Where to Place Incoming Page
+    - First-Fit
+    - Best-Fit
+    - Worst-Fit
+    - Next-Fit
+
+- Replacement Strategies
+
+  - Which Victim to Displace for Incoming Page
+
+    - Local Fixed Allocation
+
+      Victim from Only its Own Set of Allocated Frames
+
+    - Global Variable Allocation
+
+      Victim from Set of All Frames
+
+- Cleaning Strategies
+
+  - When to Write-Back Updated Page
+    - Demand Cleaning
+    - Anticipatory Cleaning
+
+- Load Control Strategies
+
+  - How many Multiprogramming Degree
+
+  ![Plateau Graph](images/load-control-plateu.png)
+
+  - Underloaded
+
+    System Resource Waste & Performance Degradation
+
+  - Overloaded
+
+    System Resource Contention & Performance Degradation
+
+  - Thrashing
+
+    Excessive Paging Activity
+
+
+
+## Page Replacement Strategy
+
+### MIN Algorithm
+
+![MIN Algorithm Diagram](images/min-diagram.png)
+
+- Local Fixed Allocation
+
+- Scheme
+
+  Select Victim will not be Used for Longest Period of Time
+
+- Process Reference String is Known a priori
+
+- Use for Performance Measurement Tool
+
+![Min Algorithm Example](images/min-example.png)
+
+### Random Algorithm
+
+![Random Algorithm Diagram](images/random-diagram.png)
+
+- Local Fixed Allocation
+
+- Scheme
+
+  Select Victim Randomly
+
+- Low Overhead
+
+
+
+### FIFO, First In First Out Algorithm
+
+![FIFO Algorithm Diagram](images/fifo-diagram.png)
+
+- Local Fixed Allocation
+
+- Scheme
+
+  Select Victim for Oldest Page
+
+- Replace Frequently Used Page 상황 가능
+
+- Require Timestamping
+
+![FIFO Algorithm Example](images/fifo-example.png)
+
+- FIFO Anomaly
+
+  ![FIFO Algorithm Anomaly Example](images/fifo-anomaly-example.png)
+
+  더 많은 Memory Frame이더라도 Page Fault Frequency가 여전히 증가하는 현상
+
+### LRU, Least Recently Used Algorithm
+
+![LRU Algorithm Diagram](images/lru-diagram.png)
+
+- Local Fixed Allocation
+
+- Scheme
+
+  Select Victim which Has Not Been Used for Longest Period of Time
+
+- Based on Program Locality
+
+- Require Timestamping
+
+![LRU Algorithm Example](images/lru-example.png)
+
+- Executing Large Loop with Insufficient Allocated Memory, Increase Steeply Page Faults
+
+  ![LRU Algorithm with Insufficient Memory](images/lru-insufficient-memory.png)
+
+### LFU, Least Frequently Used Algorithm
+
+![LFU Algorithm Diagram](images/lfu-diagram.png)
+
+- Local Fixed Allocation
+
+- Scheme
+
+  Select Victim with Smallest Reference Counts
+
+- Less Overhead than LRU
+
+- Replace Recently Loaded Page 상황 가능
+
+- Require Reference Count
+
+![LFU Algorithm Example](images/lfu-example.png)
+
+### NUR, Not Used Recently Algorithm
+
+![NUR Algorithm Diagram](images/nur-diagram.png)
+
+- Local Fixed Allocation
+
+- Scheme
+
+  Select Victim in Following Order
+
+  Reference Bit $r$, Update Bit $m$
+
+  1. $(r, m)=(0, 0)$
+  2. $(r, m)=(0, 1)$
+  3. $(r, m)=(1, 0)$
+  4. $(r, m)=(1, 1)$
+
+- Use Bit Vectors
+
+  - Reference Bits
+  - Update Bits
+
+- Low Overhead than LRU
+
+### Clock Algorithm
+
+![Clock Algorithm Diagram](images/clock-diagram.png)
+
+- Local Fixed Allocation
+- Scheme
+  1. Check Reference Bit $r$ of Pointer
+  2. If $r==0$, Select Page as a Victim
+  3. If $r==1$, Reset $r$ & Advance Pointer Clockwise & Go to Step 1
+- Use Reference Bits without Periodical Reset
+
+![Clock Algorithm Example](images/clock-example.png)
+
+### Enhanced Clock Algorithm
+
+![Enhanced Clock Algorithm Diagram](images/enhanced-clock-diagram.png)
+
+- Local Fixed Allocation
+- Scheme
+  1. Check $(r, m)$ of Pointer
+  2. If $(0, 0)$, Select Page as a Victim & Advance Pointer
+  3. If $(0, 1)$, Set to $(0, 0)$ & Put Page on Cleaning List & Advance Pointer & Go to Step 1
+  4. If $(1, 0)$, Set to $(0, 0)$ & Advance Pointer & Go to Step 1
+  5. If $(1, 1)$, Set to $(0, 1) & Advance Pointer & Go to Step 1
+
+![Enhanced Clock Algorithm Example](images/enhanced-clock-example.png)
+
+### Working Set Algorithm
+
+![Working Set Algorithm Diagram](images/working-set-diagram.png)
+
+![Working Set Algorithm Transition](images/working-set-transition.png)
+
+- Global Variable Allocation
+
+- Scheme
+
+  Let Working Set to Reside in Memory Every Time
+
+- Based on Locality
+
+- Overhead for Update Residence Set for Every Page Reference
+
+  Update Residence Set is Independent of Page Faults
+
+![Working Set Algorithm Example](images/working-set-example.png)
+
+
+
+## Other Consideration
+
+### Page Size
+
+- General Page Size
+
+  $2^7 \ (128)$ Bytes ~ $2^{22} \ (4M)$ Bytes
+
+- Smaller Page Size
+
+  - Smaller Internal Fragmentation
+  - Match Locality More Accurately
+  - Larger Page Table
+  - Increase I/O Time
+  - Increase Number of Page Faults
+
+### Program Restructuring
+
+- Aware Paged Nature of Memory or Demand Paging System
+- By User or Compiler / Linker / Loader
+
+### TLB Hit-Ratio
+
+- TLB Reach $(Number \ of \ Entries) * (Page \ Size)$
+
+- Increase Hit-Ratio
+
+  - Increase TLB Size
+
+    Expensive
+
+  - Increase Page Size
