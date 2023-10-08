@@ -1,6 +1,6 @@
 ---
 title: "[Ethereum] Accounts"
-date: 2023-10-09
+date: 2023-10-08
 pin: false
 tags:
 - Blockchain
@@ -109,3 +109,4 @@ tags:
 
 - [Ethereum Accounts](https://ethereum.org/en/developers/docs/accounts/)
 - [Takenobu Tani, "ethereum-evm-illustrated"](https://takenobu-hs.github.io/downloads/ethereum_evm_illustrated.pdf)
+
