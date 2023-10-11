@@ -22,7 +22,9 @@ tags:
 
 
 
-## EVM Stack
+## About a EVM
+
+### Elements
 
 ![Illustrated EVM](images/evm-architecture.png)
 
@@ -43,7 +45,7 @@ tags:
 
 
 
-## State Data Structure
+## Trie Data Structure
 
 ### Radix Trie
 
@@ -116,6 +118,56 @@ tags:
     4. 두번째 Path는 `9`이므로 `hashA`의 `9`에 해당하는 `hashC`를 찾음
     5. 세번째 Path는 `5`이므로 `hashC`의 `5`에 해당하는 `hashD`를 찾음
     6. `hashD`의 Data는 `duck`
+
+
+
+## Trie in Ethereum
+
+- Block Header에는 아래 세 가지 Trie Root를 포함
+  1. State Root
+  2. Transactions Root
+  3. Receipts Root
+
+### State Trie
+
+- Global State Trie
+
+- 하나의 Block을 처리할 때마다 Update
+
+- `path`는 `keccak256(ethereumAddress)`
+
+- `value`는 `rlp(ethereumAccount)`
+
+  이때 `account`는 `[nonce, balance, storageRoot, codeHash]`로 구성
+
+### Storage Trie
+
+- Smart Contract Data가 보관되는 자료구조
+
+- 각 Account마다 고유한 Trie를 보유
+
+  EOA인 경우 `storageRoot`는 Empty
+
+### Transactions Trie
+
+- 각 Block마다 포함된 Transaction이 담긴 Trie
+
+- `path`는 `rlp(transactionIndex)`
+
+- `value`는
+
+  ```pseudocode
+  if legacyTx:
+      value = rlp(tx)
+  else:
+      value = TxType | encode(tx)
+  ```
+
+### Receipts Trie
+
+- 각 Block마다 고유한 Trie를 보유
+- 한 번 생성된 후로는 Update될 일 없음
+- `path`는 `rlp(transactionIndex)`
 
 
 
